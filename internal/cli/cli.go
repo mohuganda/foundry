@@ -219,6 +219,12 @@ func templateCmd(args []string) int {
 		return 0
 	}
 	if args[0] == "pack" {
+		packArgs := args[1:]
+		dir := ""
+		if len(packArgs) > 0 && !strings.HasPrefix(packArgs[0], "-") {
+			dir = packArgs[0]
+			packArgs = packArgs[1:]
+		}
 		f := flag.NewFlagSet("template pack", flag.ContinueOnError)
 		f.SetOutput(os.Stderr)
 		out := f.String("out", "", "output zip path")
@@ -226,14 +232,17 @@ func templateCmd(args []string) int {
 		version := f.String("version", "", "template version")
 		kind := f.String("kind", "", "template kind")
 		url := f.String("url", "", "published archive URL for registry entry")
-		if err := f.Parse(args[1:]); err != nil {
+		if err := f.Parse(packArgs); err != nil {
 			return 2
 		}
-		if len(f.Args()) == 0 {
+		if dir == "" && len(f.Args()) > 0 {
+			dir = f.Args()[0]
+		}
+		if dir == "" {
 			fmt.Fprintln(os.Stderr, "usage: foundry template pack <directory> --id ID --version VERSION --kind KIND [--out file.zip]")
 			return 2
 		}
-		sha, err := publish.Pack(f.Args()[0], *out)
+		sha, err := publish.Pack(dir, *out)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			return 1

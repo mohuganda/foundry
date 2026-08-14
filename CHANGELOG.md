@@ -6,6 +6,7 @@
 - Add static release builds for Linux, macOS, and Windows on amd64 and arm64.
 - Add tag-driven GitHub Releases with archives and SHA-256 checksums.
 - Validate formatting and cross-compilation in CI.
+- Accept the documented directory-first syntax for `foundry template pack`.
 
 ## 1.2.0
 
