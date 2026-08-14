@@ -1,0 +1,6 @@
+name: __PROJECT_NAME___workspace
+publish_to: none
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+dev_dependencies:
+  melos: ^7.0.0

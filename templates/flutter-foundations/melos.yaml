@@ -1,0 +1,19 @@
+name: __PROJECT_NAME__
+packages:
+  - apps/**
+  - packages/**
+command:
+  bootstrap:
+    runPubGetInParallel: false
+scripts:
+  analyze:
+    run: melos exec -- flutter analyze
+    description: Analyze every package.
+  test:
+    run: melos exec --dir-exists=test -- flutter test
+    description: Run package tests.
+  format:
+    run: dart format .
+    description: Format the workspace.
+  get:
+    run: melos bootstrap

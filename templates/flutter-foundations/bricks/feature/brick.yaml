@@ -1,0 +1,8 @@
+name: feature
+description: Generate a Riverpod-ready feature shell.
+version: 1.0.0
+vars:
+  feature_name:
+    type: string
+    description: Feature name
+    prompt: Feature name?
