@@ -1,8 +1,8 @@
-# Foundry v1.1
+# Foundry
 
 Foundry is a single Go CLI for creating and extending projects from reusable foundations.
 
-## What v1.1 adds
+## Highlights
 
 - external, versioned template registry support
 - SHA-256 verified template ZIP downloads
@@ -17,17 +17,38 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 - `go-grpc-clean` (`go`, `grpc`, `backend`) — Go, gRPC, Protobuf, Clean Architecture, PostgreSQL, local JWT, optional OIDC, local RBAC, OpenTelemetry, Prometheus, Docker, migrations and tests.
 - `flutter-foundations` (`flutter`, `mobile`, `app`) — Flutter, Riverpod, go_router, Dio, Melos, Mason-ready feature generation and reusable foundation packages.
 
-## Build/install
+## Install
+
+Foundry is distributed as a static executable and does not need a runtime. Release
+archives are built for:
+
+| Operating system | Architectures |
+| --- | --- |
+| Linux | amd64, arm64 |
+| macOS | Intel (amd64), Apple Silicon (arm64) |
+| Windows | amd64, arm64 |
+
+Download the archive for your platform from GitHub Releases, verify it against
+`SHA256SUMS`, extract it, and place `foundry` (or `foundry.exe`) on your `PATH`.
+
+Install directly from source with Go 1.23 or newer:
 
 ```bash
-go install ./cmd/foundry
+go install github.com/jabahum/foundry/cmd/foundry@latest
 ```
 
-or:
+For local development:
 
 ```bash
 make build
 ./bin/foundry version
+```
+
+On Windows, where `make` may not be installed, use the Go command directly:
+
+```powershell
+go build -trimpath -o foundry.exe ./cmd/foundry
+.\foundry.exe version
 ```
 
 ## Create projects
@@ -214,13 +235,26 @@ Authentication/RBAC choices belong to the generated Go foundation, not to Foundr
 
 ```bash
 make fmt
-make test
-make vet
+make check
 make build
 make smoke
 ```
 
 `go test ./...` includes tests for registry fetching/caching/checksum validation and the Go/Flutter add generators.
+
+### Releases
+
+Create all supported archives and checksums locally:
+
+```bash
+make clean
+make release-snapshot VERSION=1.2.0
+```
+
+Pushing a tag such as `v1.2.0` runs tests, produces static Linux, macOS, and
+Windows archives, injects the tag into `foundry version`, generates SHA-256
+checksums, and publishes a GitHub Release. The release workflow can also be run
+manually to validate packaging without publishing a release.
 
 ## Foundry v1.2 project maintenance
 

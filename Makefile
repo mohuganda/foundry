@@ -1,10 +1,12 @@
 BINARY := bin/foundry
+VERSION ?= dev
+LDFLAGS := -s -w -X github.com/jabahum/foundry/internal/cli.Version=$(VERSION)
 
-.PHONY: build test fmt vet smoke clean install
+.PHONY: build test fmt fmt-check vet check smoke install release-snapshot clean
 
 build:
 	mkdir -p bin
-	go build -trimpath -o $(BINARY) ./cmd/foundry
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/foundry
 
 test:
 	go test ./...
@@ -12,8 +14,13 @@ test:
 fmt:
 	gofmt -w cmd internal
 
+fmt-check:
+	test -z "$$(gofmt -l .)"
+
 vet:
 	go vet ./...
+
+check: fmt-check test vet
 
 smoke: build
 	./$(BINARY) version
@@ -29,7 +36,10 @@ smoke: build
 	rm -rf .tmp-smoke
 
 install:
-	go install ./cmd/foundry
+	go install -trimpath -ldflags "$(LDFLAGS)" ./cmd/foundry
+
+release-snapshot:
+	./scripts/build-release.sh "$(VERSION)"
 
 clean:
 	rm -rf bin dist .tmp-smoke

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Remove checked-in build artifacts and an orphan generated application file.
+- Add static release builds for Linux, macOS, and Windows on amd64 and arm64.
+- Add tag-driven GitHub Releases with archives and SHA-256 checksums.
+- Validate formatting and cross-compilation in CI.
+
 ## 1.2.0
 
 - Added `.foundry.yaml` project metadata to generated projects.

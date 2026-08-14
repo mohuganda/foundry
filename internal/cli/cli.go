@@ -20,7 +20,9 @@ import (
 	"github.com/jabahum/foundry/internal/upgrade"
 )
 
-const Version = "1.2.0"
+// Version is overridden from the release tag at build time. Keeping a useful
+// fallback makes `go install` and local source builds self-describing.
+var Version = "1.2.0"
 
 type App struct{ FS fs.FS }
 

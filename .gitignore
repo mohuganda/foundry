@@ -1,0 +1,14 @@
+# Local build and release artifacts
+/bin/
+/dist/
+/foundry
+/foundry.exe
+
+# Test and editor artifacts
+/.tmp-*/
+*.test
+*.out
+.DS_Store
+.idea/
+.vscode/
+
