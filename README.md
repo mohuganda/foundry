@@ -164,6 +164,9 @@ foundry/
             └── template.zip
 ```
 
+Set `FOUNDRY_CACHE_DIR` to use an explicit cache location, which is useful in
+CI, containers, and other isolated environments.
+
 Once downloaded:
 
 ```bash

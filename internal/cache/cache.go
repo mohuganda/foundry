@@ -4,14 +4,24 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func Dir() (string, error) {
-	base, err := os.UserCacheDir()
-	if err != nil {
-		return "", err
+	d := strings.TrimSpace(os.Getenv("FOUNDRY_CACHE_DIR"))
+	if d == "" {
+		base, err := os.UserCacheDir()
+		if err != nil {
+			return "", err
+		}
+		d = filepath.Join(base, "foundry")
+	} else {
+		var err error
+		d, err = filepath.Abs(d)
+		if err != nil {
+			return "", err
+		}
 	}
-	d := filepath.Join(base, "foundry")
 	if err := os.MkdirAll(d, 0o755); err != nil {
 		return "", err
 	}

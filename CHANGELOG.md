@@ -1,15 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 - 2026-08-30
 
 - Remove checked-in build artifacts and an orphan generated application file.
 - Add static release builds for Linux, macOS, and Windows on amd64 and arm64.
 - Add tag-driven GitHub Releases with archives and SHA-256 checksums.
 - Validate formatting and cross-compilation in CI.
 - Accept the documented directory-first syntax for `foundry template pack`.
-
-## 1.2.0
-
+- Add `FOUNDRY_CACHE_DIR` for deterministic CI and container cache placement.
 - Added `.foundry.yaml` project metadata to generated projects.
 - Added safe, read-only `foundry upgrade --check` foundation version reporting.
 - Added `foundry add repository` for Go repository port/PostgreSQL adapter scaffolding.

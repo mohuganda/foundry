@@ -13,7 +13,7 @@ import (
 )
 
 func TestUpdateAndResolveRemoteRelease(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv("FOUNDRY_CACHE_DIR", t.TempDir())
 	var z bytes.Buffer
 	zw := zip.NewWriter(&z)
 	w, err := zw.Create("README.md")
