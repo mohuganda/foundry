@@ -1,0 +1,2 @@
+# Keep embedded template contents identical across build platforms.
+templates/** text=auto eol=lf
