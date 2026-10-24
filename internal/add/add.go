@@ -103,7 +103,7 @@ func (h *%sHandler) Get%s(ctx context.Context, req *pb.Get%sRequest) (*pb.Get%sR
 	if err != nil {
 		return Result{}, err
 	}
-	return Result{Files: written, Next: []string{"implement a persistence adapter for internal/domain/" + name + ".Repository", "run: make proto", "wire New" + pascal + "Handler into cmd/server/main.go"}}, nil
+	return Result{Files: written, Next: []string{"implement a persistence adapter for internal/domain/" + name + ".Repository", "run: make codegen", "wire New" + pascal + "Handler into cmd/server/main.go"}}, nil
 }
 
 func GoMigration(root, name string) (Result, error) {
@@ -187,7 +187,7 @@ class %sPage extends StatelessWidget {
 	if err != nil {
 		return Result{}, err
 	}
-	return Result{Files: written, Next: []string{"add the feature route to your go_router configuration", "run: melos bootstrap", "add feature-specific tests"}}, nil
+	return Result{Files: written, Next: []string{"add the feature route to your go_router configuration", "run: fvm dart run melos run bootstrap", "add feature-specific tests"}}, nil
 }
 
 func FlutterPackage(root, name string) (Result, error) {
@@ -205,7 +205,7 @@ func FlutterPackage(root, name string) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	return Result{Files: written, Next: []string{"run: melos bootstrap"}}, nil
+	return Result{Files: written, Next: []string{"run: fvm dart run melos run bootstrap"}}, nil
 }
 
 func writeFiles(root string, files map[string]string) ([]string, error) {
@@ -406,5 +406,5 @@ message Get%sResponse { string id = 1; }
 	if err != nil {
 		return Result{}, err
 	}
-	return Result{Files: written, Next: []string{"run: make proto", "implement and register the generated service server"}}, nil
+	return Result{Files: written, Next: []string{"run: make codegen", "implement and register the generated service server"}}, nil
 }

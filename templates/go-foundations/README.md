@@ -368,3 +368,37 @@ The server marks gRPC health `NOT_SERVING` before graceful shutdown.
 ## Suggested production extensions
 
 This starter intentionally gives you the core service platform. Depending on the application, typical next extensions are refresh-token/session rotation, a separate `user_identities` table for multi-provider account linking, Redis permission caching with invalidation, rate limiting, database integration tests via Testcontainers, TLS/mTLS, and generated API documentation.
+
+## Command reference
+
+Run these commands from this generated project's root. `make` and `make help` list targets. Make helpers need Make, a POSIX shell, and awk; native Go commands work on Windows too.
+
+| Command | What it does |
+| --- | --- |
+| `make format` / `make format-check` | Rewrite/check Go under cmd/, internal/, and gen/ |
+| `make lint` | Run go vet with existing generated contracts |
+| `make test` | Run race-enabled tests without generating contracts; requires a C toolchain for the race detector |
+| `make build` | Build bin/server; override BINARY if needed |
+| `make dev` | Start the Go process using exported environment values; needs PostgreSQL and configured JWT keys |
+| `make check` | Format check → lint → race tests → build; does not regenerate tracked contracts |
+| `make tools` | Install pinned Buf/protobuf/gateway tooling and current grpcurl; modifies Go's tool bin and may download modules |
+| `make codegen` | Regenerate protobuf, gRPC, gateway and OpenAPI outputs; requires tools on PATH; modifies generated files |
+| `make contracts-check` | Buf lint without code generation |
+| `make ci` | Sequential codegen → contract lint → check; review generated changes |
+| `make keys` | Run scripts/generate-dev-keys.sh; create only missing development RSA key files under secrets/ |
+| `make docker-up` | Ensure keys, build/start Compose stack, run migrations and API bootstrap |
+| `make docker-down` | Stop/remove Compose services; retain the named database volume |
+| `make logs` | Follow API container logs until interrupted |
+| `make migrate-up` | Apply pending migrations to DATABASE_URL using the local migrate CLI |
+| `make migrate-down` | Roll back one migration in that database |
+| `make migrate-create name=...` | Create paired SQL files using the migrate CLI |
+| `make tidy` | Update go.mod/go.sum to match imports; may download dependencies |
+| `make clean` | Remove bin/ and coverage.out; preserve contracts and secrets/ |
+
+Compatibility aliases: `fmt` → `format`, `proto` → `codegen`, `run` → `dev`. Tests and dev no longer regenerate bindings as a side effect. After changing a contract, run codegen explicitly, review its output, then check. After generation with `--no-hooks`, run format once if module substitution changed import order.
+
+The server reads process environment variables; it does not load configs/.env.example automatically. Export DATABASE_URL and overrides before make dev. The Make DATABASE_URL default is for migration commands, not automatic application configuration. Compose supplies its own container environment. Local migration commands additionally require the migrate CLI; make tools does not install it.
+
+The key script accepts `--help`, resolves its project root regardless of caller directory, preserves existing keys, and sets the private key to mode 600 when creating it. OpenSSL is required. Database migrations and Docker startup are explicit actions; check/test do not run them.
+
+On Windows without Make, use `gofmt -l ./cmd ./internal ./gen`, `go vet ./...`, `go test -race ./...`, and `go build -trimpath -o bin/server.exe ./cmd/server`. Use a POSIX environment for shell helpers, or configure development keys and services through your own platform tooling.

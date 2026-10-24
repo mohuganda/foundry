@@ -49,10 +49,12 @@ func TestBundledTemplatesGenerate(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			if runtime.GOOS != "windows" && (name == "go" || name == "flutter") {
+			if runtime.GOOS != "windows" && (name == "go" || name == "flutter" || name == "rust") {
 				script := "scripts/setup.sh"
 				if name == "go" {
 					script = "scripts/generate-dev-keys.sh"
+				} else if name == "rust" {
+					script = "scripts/check.sh"
 				}
 				info, err := os.Stat(filepath.Join(dest, script))
 				if err != nil {

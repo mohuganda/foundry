@@ -24,6 +24,13 @@ var Version = "1.2.0"
 type App struct{ FS fs.FS }
 
 func (a App) Run(args []string) int {
+	if len(args) > 1 {
+		switch args[0] {
+		case "list", "doctor", "version", "--version", "-v", "help", "--help", "-h":
+			fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry help")
+			return 2
+		}
+	}
 	if len(args) == 0 {
 		return a.interactive()
 	}
@@ -42,7 +49,11 @@ func (a App) Run(args []string) int {
 		printTemplates()
 		return 0
 	case "info":
-		if len(args) < 2 {
+		if len(args) == 2 && (args[1] == "--help" || args[1] == "-h") {
+			fmt.Println("Usage: foundry info <template>")
+			return 0
+		}
+		if len(args) != 2 {
 			fmt.Fprintln(os.Stderr, "usage: foundry info <template>")
 			return 2
 		}
@@ -118,10 +129,18 @@ func (a App) newCmd(args []string) int {
 	force := f.Bool("force", false, "allow generation into non-empty directory")
 	noHooks := f.Bool("no-hooks", false, "skip post-generation hooks")
 	if err := f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
 		return 2
 	}
-	if name == "" && len(f.Args()) > 0 {
-		name = f.Args()[0]
+	remaining := f.Args()
+	if name == "" && len(remaining) > 0 {
+		name, remaining = remaining[0], remaining[1:]
+	}
+	if len(remaining) > 0 {
+		fmt.Fprintln(os.Stderr, "unexpected arguments; use: foundry new <name> [flags]")
+		return 2
 	}
 	if name == "" {
 		fmt.Fprintln(os.Stderr, "usage: foundry new <name> --template <go|flutter|vanilla-js|react|rust>")
@@ -157,6 +176,10 @@ func (a App) newCmd(args []string) int {
 }
 
 func addCmd(args []string) int {
+	if (len(args) == 1 && (args[0] == "--help" || args[0] == "-h")) || (len(args) == 2 && (args[1] == "--help" || args[1] == "-h")) {
+		fmt.Println("Usage: foundry add <service|repository|proto|migration|feature|package> <name> [--project path]\n       foundry add usecase <domain> [name] [--project path]")
+		return 0
+	}
 	if len(args) < 2 {
 		fmt.Fprintln(os.Stderr, "usage: foundry add <service|repository|usecase|proto|migration|feature|package> <name> [--project path]")
 		return 2
@@ -165,7 +188,23 @@ func addCmd(args []string) int {
 	f := flag.NewFlagSet("add", flag.ContinueOnError)
 	f.SetOutput(os.Stderr)
 	project := f.String("project", ".", "project root")
-	if err := f.Parse(args[2:]); err != nil {
+	rest := args[2:]
+	usecase := ""
+	if kind == "usecase" && len(rest) > 0 && !strings.HasPrefix(rest[0], "-") {
+		usecase, rest = rest[0], rest[1:]
+	}
+	if err := f.Parse(rest); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
+		return 2
+	}
+	remaining := f.Args()
+	if kind == "usecase" && usecase == "" && len(remaining) > 0 {
+		usecase, remaining = remaining[0], remaining[1:]
+	}
+	if len(remaining) > 0 {
+		fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry add --help")
 		return 2
 	}
 	root, err := filepath.Abs(*project)
@@ -181,9 +220,9 @@ func addCmd(args []string) int {
 		result, err = addgen.GoRepository(root, name)
 	case "usecase":
 		domain := name
-		uc := "execute"
-		if extra := f.Args(); len(extra) > 0 {
-			uc = extra[0]
+		uc := usecase
+		if uc == "" {
+			uc = "execute"
 		}
 		result, err = addgen.GoUsecase(root, domain, uc)
 	case "proto":
@@ -216,7 +255,11 @@ func addCmd(args []string) int {
 }
 
 func templateCmd(args []string) int {
-	if len(args) == 0 || args[0] == "list" {
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
+		fmt.Println("Usage: foundry template list (also: foundry list)")
+		return 0
+	}
+	if len(args) == 0 || (len(args) == 1 && args[0] == "list") {
 		printTemplates()
 		return 0
 	}
@@ -239,9 +282,19 @@ func upgradeCmd(args []string) int {
 	project := f.String("project", ".", "project root")
 	check := f.Bool("check", true, "check for a newer template version")
 	if err := f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
 		return 2
 	}
-	_ = check
+	if !*check {
+		fmt.Fprintln(os.Stderr, "upgrade supports read-only check mode only; omit --check or set it to true")
+		return 2
+	}
+	if f.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry upgrade --help")
+		return 2
+	}
 	root, err := filepath.Abs(*project)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -260,6 +313,10 @@ func upgradeCmd(args []string) int {
 }
 
 func masonCmd(args []string) int {
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
+		fmt.Println("Usage: foundry mason <brick> [mason arguments...] (runs mason make from PATH)")
+		return 0
+	}
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: foundry mason <brick> [mason arguments...]")
 		return 2

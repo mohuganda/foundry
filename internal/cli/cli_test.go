@@ -60,3 +60,65 @@ func TestRetiredDeliveryCommandsAreRejected(t *testing.T) {
 		}
 	}
 }
+
+func TestCommandHelpSucceedsWithoutGenerating(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	for _, args := range [][]string{{"new", "--help"}, {"add", "--help"}, {"add", "service", "--help"}, {"template", "--help"}, {"upgrade", "--help"}, {"mason", "--help"}, {"info", "--help"}} {
+		if code := app.Run(args); code != 0 {
+			t.Fatalf("%v: exit %d, want 0", args, code)
+		}
+	}
+}
+
+func TestUsecaseProjectFlagBeforeOrAfterName(t *testing.T) {
+	caller := t.TempDir()
+	previous, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(caller); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(previous); err != nil {
+			t.Error(err)
+		}
+	})
+	for _, order := range []string{"name-first", "flags-first", "default-name"} {
+		t.Run(order, func(t *testing.T) {
+			project := t.TempDir()
+			if err := os.WriteFile(filepath.Join(project, "go.mod"), []byte("module example.org/service\n\ngo 1.23\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			args := []string{"usecase", "orders"}
+			want := "create"
+			switch order {
+			case "name-first":
+				args = append(args, "create", "--project", project)
+			case "flags-first":
+				args = append(args, "--project", project, "create")
+			case "default-name":
+				args = append(args, "--project", project)
+				want = "execute"
+			}
+			if code := addCmd(args); code != 0 {
+				t.Fatalf("add %v: exit %d", args, code)
+			}
+			if _, err := os.Stat(filepath.Join(project, "internal", "application", "orders", want+".go")); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := os.Stat(filepath.Join(caller, "internal")); !os.IsNotExist(err) {
+				t.Fatal("generator wrote to the caller instead of --project")
+			}
+		})
+	}
+}
+
+func TestUnexpectedArgumentsAndWriteUpgradeModeAreRejected(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	for _, args := range [][]string{{"list", "extra"}, {"template", "list", "extra"}, {"info", "go", "extra"}, {"upgrade", "--check=false"}, {"add", "migration", "name", "unexpected"}, {"new", "demo", "--template", "rust", "extra"}} {
+		if code := app.Run(args); code != 2 {
+			t.Fatalf("%v: exit %d, want 2", args, code)
+		}
+	}
+}

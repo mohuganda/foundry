@@ -38,6 +38,8 @@ Install directly from source with Go 1.23 or newer:
 go install github.com/jabahum/foundry/cmd/foundry@latest
 ```
 
+For the complete CLI, script, template, and release reference, see [Commands and workflows](docs/commands.md). Each generated template also documents its own commands in its README.
+
 For local development:
 
 ```bash
@@ -68,13 +70,19 @@ foundry new users-service \
   --module github.com/your-org/users-service
 ```
 
-Flutter app:
+Flutter workspace and app:
 
 ```bash
-foundry new mediguide \
-  --template flutter \
-  --org ug.go.health
+foundry new mediguide --template flutter --no-hooks
+cd mediguide
+bash scripts/setup.sh
+fvm dart pub global run mason_cli:mason make flutter_app \
+  --name mediguide --organization ug.go.health
+# Add apps/mediguide to workspace: in pubspec.yaml.
+fvm dart pub get
 ```
+
+Configure native platform folders, permissions, and signing in the app before a platform build. The template README explains the remaining app setup.
 
 Vanilla JavaScript:
 
@@ -108,7 +116,7 @@ cargo lint
 
 The Rust starter has no third-party dependencies. Its toolchain file selects stable Rust with rustfmt and Clippy, and its minimum supported version is Rust 1.85. Domain rules live in feature modules, with CLI input/output at the boundary. Foundry does not run Cargo automatically.
 
-All templates are available offline. Optional generation hooks may invoke installed SDKs and their package managers; use `--no-hooks` to skip them.
+All templates are available offline. For the FVM/Mason workflow, generate Flutter with `--no-hooks` and run `bash scripts/setup.sh` explicitly. Optional generation hooks may invoke installed SDKs and their package managers; use `--no-hooks` to skip them.
 
 ## Extend an existing project
 
@@ -150,33 +158,27 @@ Template changes ship with a new Foundry build/release. There is no external tem
 
 To update a template, edit its source files and rebuild Foundry with `make build`.
 
-## Commands
+## Commands and workflows
 
-```text
-foundry
-foundry new <name> --template <go|flutter|vanilla-js|react|rust>
-foundry add service <name>
-foundry add migration <name>
-foundry add feature <name>
-foundry add package <name>
+[The command reference](docs/commands.md) documents every CLI command and flag, each template's native commands, setup requirements, generated outputs, side effects, Windows alternatives, and CI/release behavior.
+
+```sh
+foundry help
+foundry new --help
 foundry template list
-foundry list
-foundry info <template>
-foundry doctor
-foundry version
+make help
 ```
 
-## Project-generation flags
+The shared quality workflow is format → lint/analyze → test → build where a generic build exists:
 
-```text
---module       Go module path
---org          Flutter organization identifier
---package      Flutter package token
---version      require this bundled template version
---destination  output path
---force        generate into a non-empty directory
---no-hooks     skip post-generation hooks
-```
+| Project | Full quality gate |
+| --- | --- |
+| Foundry / generated Go | `make check` |
+| Flutter workspace | `fvm dart run melos run check` (build the chosen app/platform separately) |
+| Vanilla JS / React | `npm run check` |
+| Rust | `bash scripts/check.sh` or `./scripts/check.ps1` |
+
+Formatting checks do not fix source; regeneration is explicit. Use `make format`, `npm run format`, `fvm dart run melos run format`, or `cargo fmt --all` to fix formatting. Existing `fmt`, `fmt-check`, `vet`, `proto`, `run`, `quality`, and `release-snapshot` aliases remain available in their relevant projects.
 
 ## Architecture
 
@@ -200,29 +202,27 @@ Foundry CLI
    `-- doctor
 ```
 
-Authentication/RBAC choices belong to the generated Go foundation, not to Foundry itself. Flutter's platform folders are generated using the installed Flutter SDK before the foundation overlay is applied when Flutter is available.
+Authentication/RBAC choices belong to the generated Go foundation, not to Foundry itself. Legacy Flutter hooks use the installed Flutter executable before the foundation overlay, only when hooks are enabled. The recommended FVM-first setup is explicit after `--no-hooks`.
 
 ## Development
 
 ```bash
-make fmt
-make check
-make build
-make smoke
+make format
+make ci
 ```
 
-`go test ./...` checks generation of all five bundled templates, project setting substitution, CLI behavior, and the Go/Flutter add generators. Web-template CI generates fresh projects and runs `npm ci` and `npm run check` on Node 22 and 24. Rust-template CI runs formatting, tests, Clippy, documentation, and release builds on stable Rust across Linux/macOS/Windows and on Rust 1.85 for minimum-version compatibility.
+`go test ./...` checks generation of all five bundled templates, project setting substitution, CLI behavior, and the Go/Flutter add generators. Web-template CI generates fresh projects and runs `npm ci` and `npm run check` on Node 22 and 24. Rust-template CI invokes the same POSIX/PowerShell check scripts for formatting, tests, Clippy, documentation, and release builds on stable Rust across Linux/macOS/Windows and on Rust 1.85 for minimum-version compatibility.
 
 ### Releases
 
 Create all supported archives and checksums locally:
 
 ```bash
-make clean
-make release-snapshot VERSION=1.2.0
+make ci
+make release VERSION=1.2.0
 ```
 
-Pushing a tag such as `v1.2.0` runs tests, produces static Linux, macOS, and
+Pushing a tag such as `v1.2.0` runs Foundry checks, produces static Linux, macOS, and
 Windows archives, injects the tag into `foundry version`, generates SHA-256
 checksums, and publishes a GitHub Release. The release workflow can also be run
 manually to validate packaging without publishing a release.
@@ -245,8 +245,8 @@ foundry add usecase orders create
 foundry add proto billing
 ```
 
-Flutter Mason bricks can be invoked consistently through Foundry:
+With a Mason executable configured on PATH, Foundry forwards brick arguments to `mason make`:
 
 ```bash
-foundry mason feature --name profile
+foundry mason feature --app mediguide --name profile
 ```

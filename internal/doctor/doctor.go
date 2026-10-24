@@ -15,7 +15,7 @@ func Run() []Check {
 	checks := []Check{{Name: "OS", Detail: runtime.GOOS + "/" + runtime.GOARCH, OK: true}}
 	for _, c := range []struct{ Name, Bin string }{
 		{"Git", "git"}, {"Rust", "rustc"}, {"Cargo", "cargo"}, {"Node.js", "node"}, {"npm", "npm"}, {"Go", "go"}, {"Docker", "docker"}, {"Buf", "buf"},
-		{"grpcurl", "grpcurl"}, {"Flutter", "flutter"}, {"Dart", "dart"}, {"Melos", "melos"}, {"Mason", "mason"},
+		{"grpcurl", "grpcurl"}, {"FVM", "fvm"}, {"OpenSSL", "openssl"}, {"Migrations", "migrate"}, {"Flutter", "flutter"}, {"Dart", "dart"}, {"Melos", "melos"}, {"Mason", "mason"},
 	} {
 		p, err := exec.LookPath(c.Bin)
 		checks = append(checks, Check{Name: c.Name, Detail: p, OK: err == nil})

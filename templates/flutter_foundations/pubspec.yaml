@@ -47,16 +47,22 @@ melos:
     outdated:
       description: Show outdated dependencies.
       run: fvm dart run melos exec -- fvm dart pub outdated
+    lint:
+      description: Analyze all workspace packages (alias for analyze).
+      run: fvm dart run melos run analyze
+    check:
+      description: Check formatting, analysis, and tests without generating code.
+      run: fvm dart run melos run format:check && fvm dart run melos run lint && fvm dart run melos run test
     quality:
-      description: Run formatting, analysis, and tests.
-      run: fvm dart run melos run format:check && fvm dart run melos run analyze && fvm dart run melos run test
+      description: Compatibility alias for check.
+      run: fvm dart run melos run check
     ci:
-      description: CI quality gate including generated code.
-      run: fvm dart run melos run codegen && fvm dart run melos run quality
+      description: Generate code, run checks, and validate every Mason brick.
+      run: fvm dart run melos run codegen && fvm dart run melos run check && fvm dart run melos run bricks:validate
 
     bricks:list:
       description: List available Mason bricks.
-      run: mason list
+      run: fvm dart pub global run mason_cli:mason list
     bricks:validate:
       description: Render, generate, analyze, and test every Mason brick.
       run: bash scripts/validate_bricks.sh
