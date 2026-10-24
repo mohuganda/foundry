@@ -2,6 +2,8 @@
 
 This guide covers the Foundry executable, development of Foundry itself, and commands inside generated projects. Run `foundry help` for CLI syntax, `make help` in either Make-based project for targets, and a shell script with `--help` for its inputs. Rust's PowerShell script uses `-Help`.
 
+See [Distribution](distribution.md) for Homebrew installation, Docker usage, and release publication automation.
+
 ## Choose a command category
 
 The [workspace guide](workspaces.md) explains which commands apply to each workspace and gives creation-to-validation recipes. This page is the detailed reference.
