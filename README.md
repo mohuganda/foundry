@@ -4,7 +4,7 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 
 ## Highlights
 
-- Go, Flutter, Vanilla JavaScript, and React templates bundled directly as source files in one executable
+- Go, Flutter, Vanilla JavaScript, React, and Rust templates bundled directly as source files in one executable
 - offline project generation with no template downloads or packaging step
 - `foundry template list` to inspect the bundled templates
 - `foundry add service` and `foundry add migration` for Go projects
@@ -16,6 +16,7 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 - `flutter-foundations` (`flutter`, `mobile`, `app`) — Flutter, Riverpod, go_router, Dio, Melos, Mason-ready feature generation and reusable foundation packages.
 - `vanilla-js-foundations` (`vanilla-js`, `vanilla`, `javascript`, `js`) — JavaScript ES modules, Vite, feature-first DOM components, ESLint, Prettier, Vitest, and Testing Library.
 - `react-foundations` (`react`) — React with JavaScript, Vite, feature-first components, Hooks linting, ESLint, Prettier, Vitest, and Testing Library.
+- `rust-foundations` (`rust`, `rs`) — Rust 2024, a thin CLI and reusable library, feature modules, validated domain types, typed errors, unit/integration/doc tests, rustfmt, and Clippy.
 
 ## Install
 
@@ -95,6 +96,18 @@ npm run dev
 
 The web templates use Node.js 22.18+ on the 22.x line, Node 24, or a newer supported even-numbered release. They include a feature-first `src/app`, `src/pages`, `src/features`, and `src/shared` structure, colocated tests, public environment configuration, reusable UI/styles, and an HTTP helper. Run `npm run check` for formatting, lint, tests, and a production build. Dependency installation is explicit; Foundry does not run npm automatically.
 
+Rust application:
+
+```bash
+foundry new command-tool --template rust
+cd command-tool
+cargo run --locked -- greet "Ada Lovelace"
+cargo test --locked
+cargo lint
+```
+
+The Rust starter has no third-party dependencies. Its toolchain file selects stable Rust with rustfmt and Clippy, and its minimum supported version is Rust 1.85. Domain rules live in feature modules, with CLI input/output at the boundary. Foundry does not run Cargo automatically.
+
 All templates are available offline. Optional generation hooks may invoke installed SDKs and their package managers; use `--no-hooks` to skip them.
 
 ## Extend an existing project
@@ -129,6 +142,7 @@ All templates are maintained under `templates/` and embedded directly into the F
 | Flutter Foundations | `templates/flutter_foundations/` | Embedded source files |
 | Vanilla JavaScript Foundations | `templates/vanilla-js-foundations/` | Embedded source files |
 | React Foundations | `templates/react-foundations/` | Embedded source files |
+| Rust Foundations | `templates/rust-foundations/` | Embedded source files |
 
 Go source files use `.go.tmpl` and its module manifest uses `go.mod.tmpl` to keep the template separate from Foundry's Go module. Generated projects receive ordinary `.go` files and `go.mod`.
 
@@ -140,7 +154,7 @@ To update a template, edit its source files and rebuild Foundry with `make build
 
 ```text
 foundry
-foundry new <name> --template <go|flutter|vanilla-js|react>
+foundry new <name> --template <go|flutter|vanilla-js|react|rust>
 foundry add service <name>
 foundry add migration <name>
 foundry add feature <name>
@@ -174,7 +188,8 @@ Foundry CLI
    |      +-- Go foundation
    |      +-- Flutter foundation
    |      +-- Vanilla JavaScript foundation
-   |      `-- React foundation
+   |      +-- React foundation
+   |      `-- Rust foundation
    |
    +-- add generators
    |      +-- Go service
@@ -196,7 +211,7 @@ make build
 make smoke
 ```
 
-`go test ./...` checks generation of all four bundled templates, project setting substitution, CLI behavior, and the Go/Flutter add generators. Web-template CI generates fresh projects and runs `npm ci` and `npm run check` on Node 22 and 24.
+`go test ./...` checks generation of all five bundled templates, project setting substitution, CLI behavior, and the Go/Flutter add generators. Web-template CI generates fresh projects and runs `npm ci` and `npm run check` on Node 22 and 24. Rust-template CI runs formatting, tests, Clippy, documentation, and release builds on stable Rust across Linux/macOS/Windows and on Rust 1.85 for minimum-version compatibility.
 
 ### Releases
 

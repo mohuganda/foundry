@@ -72,3 +72,37 @@ jobs:
         working-directory: ${{ runner.temp }}/foundry-web
       - run: npm run check
         working-directory: ${{ runner.temp }}/foundry-web
+
+  rust-template:
+    name: Rust template (${{ matrix.os }}, ${{ matrix.toolchain }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [stable]
+        include:
+          - os: ubuntu-latest
+            toolchain: '1.85.0'
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: true
+      - name: Install Rust tooling
+        run: rustup toolchain install ${{ matrix.toolchain }} --profile minimal --component rustfmt --component clippy
+      - name: Generate the bundled template
+        run: go run ./cmd/foundry new rust-check --template rust --destination "${{ runner.temp }}/foundry-rust" --no-hooks
+      - run: cargo +${{ matrix.toolchain }} fmt --all -- --check
+        working-directory: ${{ runner.temp }}/foundry-rust
+      - run: cargo +${{ matrix.toolchain }} test --locked --offline
+        working-directory: ${{ runner.temp }}/foundry-rust
+      - run: cargo +${{ matrix.toolchain }} clippy --locked --offline --all-targets -- -D warnings
+        working-directory: ${{ runner.temp }}/foundry-rust
+      - run: cargo +${{ matrix.toolchain }} doc --locked --offline --no-deps
+        working-directory: ${{ runner.temp }}/foundry-rust
+      - run: cargo +${{ matrix.toolchain }} build --release --locked --offline
+        working-directory: ${{ runner.temp }}/foundry-rust

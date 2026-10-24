@@ -3,7 +3,7 @@ package registry
 import "testing"
 
 func TestFindAliases(t *testing.T) {
-	for _, name := range []string{"go-foundations", "go", "grpc", "flutter", "mobile", "vanilla-js-foundations", "vanilla", "vanilla-js", "javascript", "js", "react-foundations", "react"} {
+	for _, name := range []string{"go-foundations", "go", "grpc", "flutter", "mobile", "vanilla-js-foundations", "vanilla", "vanilla-js", "javascript", "js", "react-foundations", "react", "rust-foundations", "rust", "rs"} {
 		if _, err := Find(name); err != nil {
 			t.Fatalf("Find(%q): %v", name, err)
 		}
