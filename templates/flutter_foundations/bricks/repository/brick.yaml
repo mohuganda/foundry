@@ -1,0 +1,13 @@
+name: repository
+description: Generate domain repository contract and data implementation.
+version: 0.1.0
+vars:
+  app:
+    type: string
+    description: target app
+  feature:
+    type: string
+    description: feature name
+  name:
+    type: string
+    description: resource name

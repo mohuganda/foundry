@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "go-foundations/gen/proto/user/v1;userv1";
+
+import "buf/validate/validate.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users"
+      body: "*"
+    };
+  }
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {get: "/v1/users/{id}"};
+  }
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/v1/users"};
+  }
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  bool enabled = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message CreateUserRequest {
+  string name = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 100,
+    (buf.validate.field).string.pattern = ".*[^[:space:]].*"
+  ];
+  string email = 2 [
+    (buf.validate.field).string.email = true,
+    (buf.validate.field).string.max_len = 254
+  ];
+  string password = 3 [
+    (buf.validate.field).string.min_len = 8,
+    (buf.validate.field).string.max_len = 128
+  ];
+}
+
+message CreateUserResponse { User user = 1; }
+message GetUserRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetUserResponse { User user = 1; }
+
+message ListUsersRequest {
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100
+  ];
+  string page_token = 2 [(buf.validate.field).string.max_len = 2048];
+  string search = 3 [(buf.validate.field).string.max_len = 100];
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+}

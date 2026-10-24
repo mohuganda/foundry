@@ -64,8 +64,10 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 	}
 
 	vars := map[string]string{
+		"go-foundations":                 defaultString(o.Module, sanitize(o.Name)),
 		"grpc-clean-starter":             sanitize(o.Name),
-		"example.com/grpc-clean-starter": defaultString(o.Module, "example.com/"+sanitize(o.Name)),
+		"example.com/grpc-clean-starter": defaultString(o.Module, sanitize(o.Name)),
+		"example.com/go-foundations":     defaultString(o.Module, sanitize(o.Name)),
 		"__PROJECT_NAME__":               sanitize(o.Name),
 		"__ORG__":                        defaultString(o.Org, "com.example"),
 		"__PACKAGE__":                    defaultString(o.Package, sanitize(o.Name)),
@@ -215,12 +217,21 @@ func copyTree(src fs.FS, root, dst string) error {
 func replaceText(root string, vars map[string]string) error {
 	exts := map[string]bool{".go": true, ".mod": true, ".sum": true, ".proto": true, ".yaml": true, ".yml": true, ".json": true, ".md": true, ".sql": true, ".env": true, ".example": true, ".dart": true, ".xml": true, ".gradle": true, ".properties": true, ".toml": true, ".makefile": true, ".tmpl": true}
 	ordered := [][2]string{
+		{"example.com/go-foundations", vars["example.com/go-foundations"]},
 		{"example.com/grpc-clean-starter", vars["example.com/grpc-clean-starter"]},
+		{"go-foundations", vars["go-foundations"]},
 		{"grpc-clean-starter", vars["grpc-clean-starter"]},
 		{"__PROJECT_NAME__", vars["__PROJECT_NAME__"]},
 		{"__ORG__", vars["__ORG__"]},
 		{"__PACKAGE__", vars["__PACKAGE__"]},
 	}
+	pairs := make([]string, 0, len(ordered)*2)
+	for _, pair := range ordered {
+		if pair[1] != "" {
+			pairs = append(pairs, pair[0], pair[1])
+		}
+	}
+	replacer := strings.NewReplacer(pairs...)
 	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
@@ -234,12 +245,7 @@ func replaceText(root string, vars map[string]string) error {
 		if err != nil {
 			return err
 		}
-		s := string(data)
-		for _, pair := range ordered {
-			if pair[1] != "" {
-				s = strings.ReplaceAll(s, pair[0], pair[1])
-			}
-		}
+		s := replacer.Replace(string(data))
 		return os.WriteFile(path, []byte(s), 0o644)
 	})
 }

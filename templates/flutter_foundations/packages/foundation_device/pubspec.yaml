@@ -1,0 +1,11 @@
+name: foundation_device
+publish_to: none
+resolution: workspace
+version: 0.3.0
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  device_info_plus: ^11.5.0
+  package_info_plus: ^8.3.1

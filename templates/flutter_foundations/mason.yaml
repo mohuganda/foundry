@@ -1,0 +1,29 @@
+bricks:
+  flutter_app:
+    path: bricks/flutter_app
+  feature:
+    path: bricks/feature
+  flutter_package:
+    path: bricks/flutter_package
+  api_resource:
+    path: bricks/api_resource
+  riverpod_controller:
+    path: bricks/riverpod_controller
+  drift_table:
+    path: bricks/drift_table
+  test_suite:
+    path: bricks/test_suite
+  page:
+    path: bricks/page
+  form:
+    path: bricks/form
+  model:
+    path: bricks/model
+  repository:
+    path: bricks/repository
+  scanner:
+    path: bricks/scanner
+  notification:
+    path: bricks/notification
+  offline_feature:
+    path: bricks/offline_feature

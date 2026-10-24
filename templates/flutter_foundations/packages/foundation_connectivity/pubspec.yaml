@@ -1,0 +1,11 @@
+name: foundation_connectivity
+publish_to: none
+resolution: workspace
+version: 0.3.0
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  connectivity_plus: ^7.0.0
+  flutter_riverpod: ^3.4.1

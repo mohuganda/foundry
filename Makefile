@@ -30,7 +30,7 @@ smoke: build
 	test -f .tmp-smoke/go.mod
 	grep -q 'module example.com/smoke' .tmp-smoke/go.mod
 	./$(BINARY) add migration create_smoke --project .tmp-smoke
-	test -f .tmp-smoke/migrations/000004_create_smoke.up.sql
+	test -f .tmp-smoke/migrations/000007_create_smoke.up.sql
 	./$(BINARY) add service smoke --project .tmp-smoke
 	test -f .tmp-smoke/api/proto/smoke/v1/smoke.proto
 	rm -rf .tmp-smoke

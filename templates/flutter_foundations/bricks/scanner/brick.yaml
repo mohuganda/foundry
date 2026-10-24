@@ -1,0 +1,13 @@
+name: scanner
+description: Generate a scanner page using foundation_scanner.
+version: 0.1.0
+vars:
+  app:
+    type: string
+    description: target app
+  feature:
+    type: string
+    description: feature name
+  name:
+    type: string
+    description: scanner name

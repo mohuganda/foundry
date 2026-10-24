@@ -1,0 +1,6 @@
+name: drift_table
+description: Generate a Drift table skeleton.
+version: 0.1.0
+vars:
+  app: {type: string, prompt: App package name}
+  name: {type: string, prompt: Table/entity name}

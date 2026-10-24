@@ -1,0 +1,10 @@
+name: api_resource
+description: Generate a typed remote datasource and repository adapter.
+version: 0.1.0
+vars:
+  app:
+    type: string
+    prompt: App package name
+  name:
+    type: string
+    prompt: Resource name

@@ -1,0 +1,13 @@
+name: model
+description: Generate a Freezed JSON model.
+version: 0.1.0
+vars:
+  app:
+    type: string
+    description: target app
+  feature:
+    type: string
+    description: feature name
+  name:
+    type: string
+    description: model name

@@ -1,0 +1,41 @@
+openapiOptions:
+  file:
+    - file: audit/v1/audit.proto
+      option:
+        info:
+          title: go-foundation API
+          version: "1.0"
+          description: HTTP/JSON API generated from the go-foundation protobuf contracts.
+        schemes:
+          - HTTP
+          - HTTPS
+        consumes:
+          - application/json
+        produces:
+          - application/json
+        securityDefinitions:
+          security:
+            BearerAuth:
+              type: TYPE_API_KEY
+              in: IN_HEADER
+              name: Authorization
+              description: "Enter a JWT as: Bearer <token>"
+        security:
+          - securityRequirement:
+              BearerAuth: {}
+  method:
+    - method: auth.v1.AuthService.Login
+      option:
+        summary: Authenticate with local credentials
+        security:
+          - securityRequirement: {}
+    - method: auth.v1.AuthService.Refresh
+      option:
+        summary: Rotate a refresh token and issue a new token pair
+        security:
+          - securityRequirement: {}
+    - method: auth.v1.AuthService.Logout
+      option:
+        summary: Revoke a refresh-token session
+        security:
+          - securityRequirement: {}

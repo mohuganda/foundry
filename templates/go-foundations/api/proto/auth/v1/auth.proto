@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "go-foundations/gen/proto/auth/v1;authv1";
+
+import "buf/validate/validate.proto";
+import "google/api/annotations.proto";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/login"
+      body: "*"
+    };
+  }
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh"
+      body: "*"
+    };
+  }
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/logout"
+      body: "*"
+    };
+  }
+  rpc Me(MeRequest) returns (MeResponse) {
+    option (google.api.http) = {get: "/v1/auth/me"};
+  }
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {
+    option (google.api.http) = {get: "/v1/auth/sessions"};
+  }
+  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {
+    option (google.api.http) = {delete: "/v1/auth/sessions/{session_id}"};
+  }
+}
+
+message LoginRequest {
+  string email = 1 [
+    (buf.validate.field).string.email = true,
+    (buf.validate.field).string.max_len = 254
+  ];
+  string password = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 128
+  ];
+}
+
+message LoginResponse {
+  string access_token = 1;
+  int64 expires_at_unix = 2;
+  UserIdentity user = 3;
+  string refresh_token = 4;
+  int64 refresh_expires_at_unix = 5;
+  string session_id = 6;
+}
+
+message RefreshRequest {
+  string refresh_token = 1 [
+    (buf.validate.field).string.min_len = 64,
+    (buf.validate.field).string.max_len = 512
+  ];
+}
+
+message RefreshResponse {
+  string access_token = 1;
+  int64 expires_at_unix = 2;
+  string refresh_token = 3;
+  int64 refresh_expires_at_unix = 4;
+  string session_id = 5;
+}
+
+message LogoutRequest {
+  string refresh_token = 1 [
+    (buf.validate.field).string.min_len = 64,
+    (buf.validate.field).string.max_len = 512
+  ];
+}
+message LogoutResponse {}
+
+message MeRequest {}
+
+message MeResponse {
+  UserIdentity user = 1;
+  repeated string roles = 2;
+  repeated string permissions = 3;
+}
+
+message ListSessionsRequest {}
+
+message Session {
+  string id = 1;
+  string user_agent = 2;
+  string client_ip = 3;
+  int64 created_at_unix = 4;
+  int64 last_used_at_unix = 5;
+  int64 expires_at_unix = 6;
+  bool current = 7;
+}
+
+message ListSessionsResponse { repeated Session sessions = 1; }
+
+message RevokeSessionRequest {
+  string session_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message RevokeSessionResponse {}
+
+message UserIdentity {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string provider = 4;
+}

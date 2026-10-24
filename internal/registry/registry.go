@@ -21,12 +21,12 @@ var templates = []Template{
 	{
 		ID: "go-grpc-clean", Name: "Go gRPC Clean Architecture", Version: "1.0.0",
 		Description: "Go + gRPC + Protobuf + PostgreSQL + local JWT + optional OIDC + local RBAC + observability",
-		Aliases:     []string{"go", "grpc", "backend"}, EmbeddedArchive: "templates/go-grpc-clean.zip", Kind: "go",
+		Aliases:     []string{"go", "grpc", "backend"}, EmbeddedArchive: "templates/go-foundations.zip", Kind: "go",
 	},
 	{
 		ID: "flutter-foundations", Name: "Flutter Foundations", Version: "1.0.0",
 		Description: "Flutter + Riverpod + go_router + Dio + Melos + Mason-ready reusable foundation packages",
-		Aliases:     []string{"flutter", "mobile", "app"}, EmbeddedDir: "templates/flutter-foundations", Kind: "flutter",
+		Aliases:     []string{"flutter", "mobile", "app"}, EmbeddedDir: "templates/flutter_foundations", Kind: "flutter",
 	},
 }
 

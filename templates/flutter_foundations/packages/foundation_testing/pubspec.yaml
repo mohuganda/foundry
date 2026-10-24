@@ -1,0 +1,17 @@
+name: foundation_testing
+publish_to: none
+resolution: workspace
+version: 0.3.0
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.4.1
+  flutter_test:
+    sdk: flutter
+
+  mocktail: ^1.0.4
+  patrol: ^3.20.0

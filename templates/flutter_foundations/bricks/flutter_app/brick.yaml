@@ -1,0 +1,15 @@
+name: flutter_app
+description: Generate a production-oriented Flutter app inside apps/.
+version: 0.1.0
+vars:
+  name:
+    type: string
+    prompt: Application name?
+  description:
+    type: string
+    default: Flutter application
+    prompt: Application description?
+  organization:
+    type: string
+    default: org.example
+    prompt: Reverse-domain organization?
