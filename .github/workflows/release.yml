@@ -37,8 +37,8 @@ jobs:
           else
             echo "value=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
           fi
-      - name: Test
-        run: go test ./...
+      - name: Check Foundry
+        run: make check
       - name: Build archives and checksums
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.value }}

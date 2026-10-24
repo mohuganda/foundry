@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Align quality command meanings across the CLI repository and all five foundations; retain existing Make/Melos aliases.
+- Add comprehensive command/workflow documentation, script help, CWD-independent helpers, and native PowerShell Rust checks.
+- Make Go contract generation explicit, isolate smoke tests, and checksum only the current release's six executable archives.
+- Correct use-case argument parsing so a trailing --project flag is honored; return success for command help.
+
 - Add embedded Rust 2024 foundations with a thin CLI, reusable library, feature modules, typed errors, unit/integration/doc tests, rustfmt, and Clippy.
 - Validate generated Rust projects across Linux, macOS, Windows, and the minimum Rust version.
 

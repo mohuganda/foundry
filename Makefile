@@ -1,45 +1,47 @@
 BINARY := bin/foundry
 VERSION ?= dev
 LDFLAGS := -s -w -X github.com/jabahum/foundry/internal/cli.Version=$(VERSION)
+.DEFAULT_GOAL := help
 
-.PHONY: build test fmt fmt-check vet check smoke install release-snapshot clean
+.PHONY: help build test format format-check lint check ci smoke install release clean fmt fmt-check vet release-snapshot
 
-build:
+help: ## Show commands; see docs/commands.md for prerequisites and side effects.
+	@awk 'BEGIN {FS = ":.*## "; print "Foundry commands:"} /^[a-zA-Z_-]+:.*## / {printf "  make %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+build: ## Build bin/foundry for this machine (VERSION defaults to dev).
 	mkdir -p bin
 	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/foundry
 
-test:
+test: ## Run Foundry tests, including embedded generation for all five templates.
 	go test ./...
 
-fmt:
-	gofmt -w cmd internal
+format: ## Format Foundry's Go source; does not format generated template projects.
+	gofmt -w assets.go cmd internal
 
-fmt-check:
-	test -z "$$(gofmt -l .)"
+format-check: ## Check Foundry formatting without rewriting source.
+	test -z "$$(gofmt -l assets.go cmd internal)"
 
-vet:
+lint: ## Run go vet on Foundry packages.
 	go vet ./...
 
-check: fmt-check test vet
+check: format-check lint test build ## Check formatting, lint, tests, and the native build.
 
-smoke: build
-	./$(BINARY) version
-	./$(BINARY) list
-	rm -rf .tmp-smoke
-	./$(BINARY) new .tmp-smoke --template go --module example.com/smoke --no-hooks
-	test -f .tmp-smoke/go.mod
-	grep -q 'module example.com/smoke' .tmp-smoke/go.mod
-	./$(BINARY) add migration create_smoke --project .tmp-smoke
-	test -f .tmp-smoke/migrations/000007_create_smoke.up.sql
-	./$(BINARY) add service smoke --project .tmp-smoke
-	test -f .tmp-smoke/api/proto/smoke/v1/smoke.proto
-	rm -rf .tmp-smoke
+ci: check smoke ## Run Foundry checks and the isolated generation/add smoke test.
 
-install:
+smoke: build ## Generate all five templates and exercise Go add commands in a temporary folder.
+	./scripts/smoke.sh
+
+install: ## Install Foundry into GOBIN or GOPATH/bin.
 	go install -trimpath -ldflags "$(LDFLAGS)" ./cmd/foundry
 
-release-snapshot:
+release: ## Build six executable archives and checksums; does not publish (VERSION=dev).
 	./scripts/build-release.sh "$(VERSION)"
 
-clean:
-	rm -rf bin dist .tmp-smoke
+clean: ## Remove local bin/ and dist/ artifacts.
+	rm -rf bin dist
+
+# Compatibility aliases. Prefer the canonical names above in new automation.
+fmt: format
+fmt-check: format-check
+vet: lint
+release-snapshot: release

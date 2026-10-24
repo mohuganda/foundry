@@ -61,20 +61,20 @@ fvm dart pub global run mason_cli:mason get
 ## Example workflow
 
 ```bash
-mason make flutter_app --name mediguide --description "Clinical Guidelines"
+fvm dart pub global run mason_cli:mason make flutter_app --name mediguide --description "Clinical Guidelines"
 # Add `apps/mediguide` under `workspace:` in the root pubspec.yaml.
-mason make feature --app mediguide --name guidelines
-mason make model --app mediguide --feature guidelines --name guideline
-mason make repository --app mediguide --feature guidelines --name guidelines
-mason make form --app mediguide --feature guidelines --name guideline_search
-mason make page --app mediguide --feature guidelines --name guidelines
-mason make offline_feature --app mediguide --feature guidelines --name guidelines
-mason make scanner --app mediguide --feature guidelines --name guideline_qr
-mason make test_suite --app mediguide --feature guidelines
+fvm dart pub global run mason_cli:mason make feature --app mediguide --name guidelines
+fvm dart pub global run mason_cli:mason make model --app mediguide --feature guidelines --name guideline
+fvm dart pub global run mason_cli:mason make repository --app mediguide --feature guidelines --name guidelines
+fvm dart pub global run mason_cli:mason make form --app mediguide --feature guidelines --name guideline_search
+fvm dart pub global run mason_cli:mason make page --app mediguide --feature guidelines --name guidelines
+fvm dart pub global run mason_cli:mason make offline_feature --app mediguide --feature guidelines --name guidelines
+fvm dart pub global run mason_cli:mason make scanner --app mediguide --feature guidelines --name guideline_qr
+fvm dart pub global run mason_cli:mason make test_suite --app mediguide --feature guidelines
 
 fvm dart pub get
 fvm dart run melos run codegen
-fvm dart run melos run quality
+fvm dart run melos run check
 fvm dart run melos run bricks:validate
 ```
 
@@ -102,7 +102,7 @@ fvm dart run melos run bricks:validate
 
 ```bash
 ./scripts/run_flavor.sh mediguide development
-fvm flutter run --project-dir apps/mediguide --dart-define-from-file=env/staging.json
+./scripts/run_flavor.sh mediguide staging
 ```
 
 Do not place secrets in committed Dart-define JSON files. Use secure runtime retrieval or CI secret injection for sensitive values.
@@ -114,9 +114,37 @@ fvm dart run melos run format:check
 fvm dart run melos run analyze
 fvm dart run melos run test
 fvm dart run melos run codegen
-fvm dart run melos run quality
+fvm dart run melos run check
 ```
 
 ## Platform setup still required per app
 
 Some plugins require native configuration (camera/photo/notification permissions, notification icons/channels, background execution, iOS usage descriptions, etc.). Keep that configuration in the generated app's Android/iOS projects and document any product-specific requirements there.
+
+## Command reference
+
+Run Melos commands from this workspace root through FVM: `fvm dart run melos run <task>`. The scripts below resolve their own project root and also accept `--help` without performing setup or validation.
+
+| Task | Work and side effects |
+| --- | --- |
+| `bootstrap`, `pub:get` | Resolve workspace packages; writes tool caches and may update pubspec.lock |
+| `format` / `format:check` | Rewrite/check Dart under apps/ and packages/ |
+| `analyze`, `lint` | Analyze every workspace package; lint is an alias |
+| `test` | Run Flutter tests in Flutter packages with test/ and Dart tests in non-Flutter packages with test/ |
+| `test:coverage` | Flutter coverage only, in Flutter packages with tests; not Dart-only coverage |
+| `codegen` / `codegen:watch` | Run build_runner in packages declaring it; writes generated source; watch stays running |
+| `check` | Format check → lint → test; no code generation or native app build |
+| `quality` | Compatibility alias for check |
+| `ci` | Codegen → check → bricks:validate; may download dependencies and change generated source |
+| `bricks:list` | List bricks through FVM-activated Mason |
+| `bricks:validate` | Render/generate/analyze/test every brick using the script below |
+| `outdated` | Report newer packages without upgrading constraints |
+| `clean` | Run flutter clean in Flutter packages; preserve source, lockfiles, Dart-only caches and installed SDKs |
+
+- `bash scripts/setup.sh`: require FVM, install the configured SDK, activate Mason CLI in Dart's global package cache, resolve packages, and fetch bricks. It may use the network. Equivalent manual steps are in Setup above.
+- `bash scripts/run_flavor.sh <app> [development|staging|production]`: default to development; require apps/<app> and env/<environment>.json; run the app using Dart defines. This selects JSON configuration, not a native `--flavor` build variant. Copy/configure the ignored staging/production JSON from its example first.
+- `bash scripts/validate_bricks.sh`: require fvm install and FVM-activated Mason; fetch bricks, render every generator in a temporary workspace, resolve dependencies, format-check, generate code, analyze and test the sample app/package, and remove the temporary workspace on exit. SDK/pub/Mason caches remain.
+
+Generate/register an app before running it: create it with FVM's Mason CLI, add apps/<name> to workspace: in pubspec.yaml, and run fvm dart pub get. Configure native platform folders, permissions and signing inside that app. Build with `fvm flutter build <platform>` from apps/<app>. Workspace check deliberately does not guess a platform or build every app.
+
+Mason commands in these instructions use `fvm dart pub global run mason_cli:mason` so they use the selected SDK. `foundry mason` is an optional wrapper around `mason make` from PATH; use it only when that global executable is configured for the workspace SDK. Shell scripts need Bash; FVM/Dart commands can also be run natively on Windows.

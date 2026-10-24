@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
+case "${1:-}" in
+  -h|--help) printf '%s\n' 'Usage: scripts/validate_bricks.sh' 'Fetches bricks, renders examples in a temporary workspace, resolves dependencies, generates code, formats, analyzes, and tests.' 'Requires fvm install and Mason CLI activated through FVM. Removes the temporary workspace on exit.'; exit 0 ;;
+esac
+[[ $# -eq 0 ]] || { echo 'Unexpected argument; use --help.' >&2; exit 2; }
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 dart_bin="$repo_root/.fvm/flutter_sdk/bin/dart"
@@ -17,10 +21,11 @@ trap cleanup EXIT
 }
 
 export PATH="$repo_root/.fvm/flutter_sdk/bin:$PATH"
-command -v mason >/dev/null || {
-  echo "Activate Mason with 'fvm dart pub global activate mason_cli'."
+"$dart_bin" pub global run mason_cli:mason --version >/dev/null || {
+  echo "Activate Mason with 'fvm dart pub global activate mason_cli'." >&2
   exit 1
 }
+mason() { "$dart_bin" pub global run mason_cli:mason "$@"; }
 
 cd "$repo_root"
 mason get

@@ -36,11 +36,25 @@ The executable consumes the same public library API as other callers. Domain val
 
 ## Checks
 
+Full gate on macOS/Linux (or a POSIX environment):
+
+```sh
+bash scripts/check.sh
+```
+
+Native Windows PowerShell:
+
+```powershell
+./scripts/check.ps1
+```
+
+The equivalent individual commands are:
+
 ```sh
 cargo fmt --all -- --check
-cargo test --locked
 cargo lint
-cargo doc --locked --no-deps
+cargo test --locked
+RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -D warnings" cargo doc --locked --no-deps
 cargo build --release --locked
 ```
 
@@ -51,3 +65,32 @@ Commit `Cargo.lock` for this application. Review dependency and toolchain change
 ## Foundry delivery
 
 Foundry embeds these source files directly. Generating this project needs no network access. Once its Rust toolchain is installed, the initial application can also build with `cargo build --locked --offline` because it has no external crates. Installing or updating Rust itself can require network access. Foundry does not invoke Cargo automatically.
+
+## Command reference
+
+Run Cargo commands from this generated project root. Both check scripts resolve the root from their own path and stop at the first failure.
+
+| Command | What it does |
+| --- | --- |
+| `cargo run --locked -- greet World` | Build/debug-run the application; values after -- are application arguments |
+| `cargo run --locked -- --help` | Show application help; different from cargo --help |
+| `cargo fmt --all` / `cargo fmt --all -- --check` | Format/check Rust source |
+| `cargo check --locked` | Type-check only; not the full quality gate |
+| `cargo lint` | Alias for clippy --locked --all-targets -- -D warnings |
+| `cargo test --locked` | Unit, executable integration, and documentation tests |
+| `cargo doc --locked --no-deps` | Write API documentation under target/doc/ |
+| `cargo build --release --locked` | Write optimized executable under target/release/; Windows adds .exe |
+| `cargo clean` | Remove Cargo target artifacts, preserving Cargo.lock and source |
+| `bash scripts/check.sh` | Format check → Clippy → all tests → docs (warnings denied) → release build |
+| `./scripts/check.ps1` | Same full gate using native PowerShell |
+
+Help: `bash scripts/check.sh --help` or `./scripts/check.ps1 -Help`. Scripts do not fix formatting or change the lockfile. Cargo's normal build/test/doc outputs are created under target/.
+
+Use RUSTUP_TOOLCHAIN to select a preinstalled compiler (CI uses stable or 1.85.0). Set CARGO_NET_OFFLINE=true to disable crate downloads for the whole gate; toolchain installation is separate. Existing RUSTDOCFLAGS are preserved, with -D warnings added for documentation. The PowerShell script restores both the caller's working directory and doc flags.
+
+Do not append --offline to cargo lint: the alias already contains --, so appended options go to the compiler. Instead use the offline environment variable or the expanded command:
+
+```sh
+CARGO_NET_OFFLINE=true bash scripts/check.sh
+cargo clippy --locked --offline --all-targets -- -D warnings
+```
