@@ -2,9 +2,9 @@ package upgrade
 
 import (
 	"fmt"
+
 	"github.com/jabahum/foundry/internal/projectconfig"
 	"github.com/jabahum/foundry/internal/registry"
-	"github.com/jabahum/foundry/internal/templatehub"
 )
 
 type Report struct {
@@ -23,14 +23,6 @@ func Check(root string) (Report, error) {
 	}
 	latest := builtin.Version
 	source := "bundled"
-	if releases, e := templatehub.ListCached(); e == nil {
-		for _, r := range releases {
-			if r.ID == builtin.ID && newer(r.Version, latest) {
-				latest = r.Version
-				source = "cached registry"
-			}
-		}
-	}
 	return Report{Current: c.TemplateVersion, Latest: latest, Template: builtin.ID, Source: source, UpdateAvailable: newer(latest, c.TemplateVersion)}, nil
 }
 

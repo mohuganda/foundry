@@ -335,13 +335,9 @@ After regenerating contracts, review the generated changes before committing the
 
 This template is maintained in Foundry's `templates/go-foundations` folder. Its Go module uses `go-foundations` as the placeholder that Foundry replaces with the application's module path during generation.
 
-Go excludes nested modules from embedded directories, so Foundry bundles this template as `templates/go-foundations.zip`. After changing this template, rebuild its archive from the Foundry repository root:
+Foundry embeds this folder directly. Go source files use `.go.tmpl` and the module manifest uses `go.mod.tmpl` so the template is separate from Foundry's own Go module. Generation removes the `.tmpl` suffix and substitutes the application's module path.
 
-```bash
-go run ./cmd/foundry template pack ./templates/go-foundations \
-  --id go-foundations --version 1.0.0 --kind go \
-  --out ./templates/go-foundations.zip
-```
+Edit these source templates and rebuild Foundry to deliver changes. To run this foundation's checks, generate a project first and run the commands from its folder.
 
 ## Health and operations
 

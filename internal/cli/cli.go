@@ -11,12 +11,9 @@ import (
 	"strings"
 
 	addgen "github.com/jabahum/foundry/internal/add"
-	"github.com/jabahum/foundry/internal/cache"
 	"github.com/jabahum/foundry/internal/doctor"
 	"github.com/jabahum/foundry/internal/generator"
-	"github.com/jabahum/foundry/internal/publish"
 	"github.com/jabahum/foundry/internal/registry"
-	"github.com/jabahum/foundry/internal/templatehub"
 	"github.com/jabahum/foundry/internal/upgrade"
 )
 
@@ -59,8 +56,6 @@ func (a App) Run(args []string) int {
 	case "doctor":
 		doctor.Print()
 		return 0
-	case "cache":
-		return cacheCmd(args[1:])
 	case "version", "--version", "-v":
 		fmt.Println("foundry", Version)
 		return 0
@@ -111,7 +106,6 @@ func (a App) newCmd(args []string) int {
 	dest := f.String("destination", "", "output directory")
 	force := f.Bool("force", false, "allow generation into non-empty directory")
 	noHooks := f.Bool("no-hooks", false, "skip post-generation hooks")
-	offline := f.Bool("offline", false, "never download a template")
 	if err := f.Parse(args); err != nil {
 		return 2
 	}
@@ -127,18 +121,22 @@ func (a App) newCmd(args []string) int {
 		return 2
 	}
 
-	resolved, err := templatehub.Resolve(*tmpl, *version, *offline)
+	selected, err := registry.Find(*tmpl)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
+	if *version != "" && *version != selected.Version {
+		fmt.Fprintf(os.Stderr, "template %q version %q is not bundled; this Foundry build includes %s\n", selected.ID, *version, selected.Version)
 		return 1
 	}
 	g := generator.Generator{FS: a.FS}
-	err = g.Generate(resolved.Template, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, ArchivePath: resolved.ArchivePath, Force: *force, NoHooks: *noHooks})
+	err = g.Generate(selected, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, Force: *force, NoHooks: *noHooks})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
 	}
-	fmt.Printf("Template source: %s\n", resolved.Source)
+	fmt.Println("Template source: bundled files")
 	return 0
 }
 
@@ -203,72 +201,10 @@ func addCmd(args []string) int {
 
 func templateCmd(args []string) int {
 	if len(args) == 0 || args[0] == "list" {
-		releases, err := templatehub.ListCached()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 1
-		}
-		if len(releases) == 0 {
-			fmt.Println("No external template registry cached. Bundled templates remain available.")
-			return 0
-		}
-		fmt.Printf("%-22s %-10s %-10s %s\n", "TEMPLATE", "VERSION", "KIND", "DESCRIPTION")
-		for _, r := range releases {
-			fmt.Printf("%-22s %-10s %-10s %s\n", r.ID, r.Version, r.Kind, r.Description)
-		}
+		printTemplates()
 		return 0
 	}
-	if args[0] == "pack" {
-		packArgs := args[1:]
-		dir := ""
-		if len(packArgs) > 0 && !strings.HasPrefix(packArgs[0], "-") {
-			dir = packArgs[0]
-			packArgs = packArgs[1:]
-		}
-		f := flag.NewFlagSet("template pack", flag.ContinueOnError)
-		f.SetOutput(os.Stderr)
-		out := f.String("out", "", "output zip path")
-		id := f.String("id", "", "template id")
-		version := f.String("version", "", "template version")
-		kind := f.String("kind", "", "template kind")
-		url := f.String("url", "", "published archive URL for registry entry")
-		if err := f.Parse(packArgs); err != nil {
-			return 2
-		}
-		if dir == "" && len(f.Args()) > 0 {
-			dir = f.Args()[0]
-		}
-		if dir == "" {
-			fmt.Fprintln(os.Stderr, "usage: foundry template pack <directory> --id ID --version VERSION --kind KIND [--out file.zip]")
-			return 2
-		}
-		sha, err := publish.Pack(dir, *out)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "error:", err)
-			return 1
-		}
-		fmt.Println("sha256:", sha)
-		if *id != "" && *version != "" && *kind != "" && *url != "" {
-			fmt.Println("registry entry:", publish.RegistryEntry(*id, *version, *kind, *url, sha))
-		}
-		return 0
-	}
-	if args[0] == "update" {
-		f := flag.NewFlagSet("template update", flag.ContinueOnError)
-		f.SetOutput(os.Stderr)
-		url := f.String("registry", "", "registry JSON URL (or FOUNDRY_REGISTRY_URL)")
-		if err := f.Parse(args[1:]); err != nil {
-			return 2
-		}
-		m, err := templatehub.Update(*url)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "error:", err)
-			return 1
-		}
-		fmt.Printf("Template registry updated: %d releases\n", len(m.Templates))
-		return 0
-	}
-	fmt.Fprintln(os.Stderr, "usage: foundry template [list|update --registry URL]")
+	fmt.Fprintln(os.Stderr, "usage: foundry template list (templates ship with Foundry; install a newer Foundry release for updates)")
 	return 2
 }
 
@@ -280,27 +216,6 @@ func printTemplates() {
 }
 func printInfo(t registry.Template) {
 	fmt.Printf("%s\nID: %s\nVersion: %s\nAliases: %s\n%s\n", t.Name, t.ID, t.Version, strings.Join(t.Aliases, ", "), t.Description)
-}
-func cacheCmd(args []string) int {
-	if len(args) == 0 || args[0] == "list" {
-		s, e := cache.Summary()
-		if e != nil {
-			fmt.Fprintln(os.Stderr, e)
-			return 1
-		}
-		fmt.Println(s)
-		return 0
-	}
-	if args[0] == "clean" {
-		if e := cache.Clean(); e != nil {
-			fmt.Fprintln(os.Stderr, e)
-			return 1
-		}
-		fmt.Println("cache cleaned")
-		return 0
-	}
-	fmt.Fprintln(os.Stderr, "usage: foundry cache [list|clean]")
-	return 2
 }
 func upgradeCmd(args []string) int {
 	f := flag.NewFlagSet("upgrade", flag.ContinueOnError)
@@ -352,8 +267,8 @@ func usage() {
 
 Usage:
   foundry
-  foundry new <name> --template go [--module path] [--version version] [--offline]
-  foundry new <name> --template flutter [--org com.example] [--version version] [--offline]
+  foundry new <name> --template go [--module path] [--version version]
+  foundry new <name> --template flutter [--org com.example] [--version version]
   foundry add service <name> [--project path]
   foundry add repository <name> [--project path]
   foundry add usecase <domain> <name> [--project path]
@@ -362,13 +277,10 @@ Usage:
   foundry add feature <name> [--project path]
   foundry add package <name> [--project path]
   foundry template list
-  foundry template update --registry <url>
-  foundry template pack <directory> --id ID --version VERSION --kind KIND
   foundry upgrade [--project path] [--check]
   foundry mason <brick> [args...]
   foundry list
   foundry info <template>
   foundry doctor
-  foundry cache [list|clean]
   foundry version`)
 }

@@ -1,11 +1,8 @@
 package generator
 
 import (
-	"archive/zip"
 	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -18,7 +15,6 @@ import (
 
 type Options struct {
 	Name, Destination, Module, Org, Package string
-	ArchivePath                             string
 	Force, NoHooks                          bool
 }
 
@@ -49,18 +45,8 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 			fmt.Fprintf(os.Stderr, "warning: flutter platform scaffold: %v\n", err)
 		}
 	}
-	if o.ArchivePath != "" {
-		if err := extractZipFile(o.ArchivePath, dest); err != nil {
-			return err
-		}
-	} else if t.EmbeddedArchive != "" {
-		if err := extractEmbeddedZip(g.FS, t.EmbeddedArchive, dest); err != nil {
-			return err
-		}
-	} else {
-		if err := copyTree(g.FS, t.EmbeddedDir, dest); err != nil {
-			return err
-		}
+	if err := copyTree(g.FS, t.EmbeddedDir, dest); err != nil {
+		return err
 	}
 
 	vars := map[string]string{
@@ -85,105 +71,6 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 	return nil
 }
 
-func extractZipFile(archivePath, dst string) error {
-	f, err := os.Open(archivePath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	st, err := f.Stat()
-	if err != nil {
-		return err
-	}
-	zr, err := zip.NewReader(f, st.Size())
-	if err != nil {
-		return fmt.Errorf("open template archive: %w", err)
-	}
-	for _, zf := range zr.File {
-		clean := filepath.Clean(zf.Name)
-		if clean == "." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || filepath.IsAbs(clean) {
-			return fmt.Errorf("unsafe archive path %q", zf.Name)
-		}
-		target := filepath.Join(dst, clean)
-		if zf.FileInfo().IsDir() {
-			if err := os.MkdirAll(target, 0o755); err != nil {
-				return err
-			}
-			continue
-		}
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-		r, err := zf.Open()
-		if err != nil {
-			return err
-		}
-		data, readErr := io.ReadAll(r)
-		closeErr := r.Close()
-		if readErr != nil {
-			return readErr
-		}
-		if closeErr != nil {
-			return closeErr
-		}
-		mode := zf.Mode()
-		if mode == 0 {
-			mode = 0o644
-		}
-		if err := os.WriteFile(target, data, mode); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func extractEmbeddedZip(src fs.FS, archivePath, dst string) error {
-	data, err := fs.ReadFile(src, archivePath)
-	if err != nil {
-		return err
-	}
-	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		return fmt.Errorf("open embedded template archive: %w", err)
-	}
-	for _, f := range zr.File {
-		clean := filepath.Clean(f.Name)
-		if clean == "." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || filepath.IsAbs(clean) {
-			return fmt.Errorf("unsafe archive path %q", f.Name)
-		}
-		target := filepath.Join(dst, clean)
-		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(target, 0o755); err != nil {
-				return err
-			}
-			continue
-		}
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-		r, err := f.Open()
-		if err != nil {
-			return err
-		}
-		content, err := io.ReadAll(r)
-		closeErr := r.Close()
-		if err != nil {
-			return err
-		}
-		if closeErr != nil {
-			return closeErr
-		}
-		mode := f.Mode()
-		if mode == 0 {
-			mode = 0o644
-		}
-		if err := os.WriteFile(target, content, mode); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func copyTree(src fs.FS, root, dst string) error {
 	return fs.WalkDir(src, root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -196,6 +83,9 @@ func copyTree(src fs.FS, root, dst string) error {
 		if rel == "." {
 			return nil
 		}
+		if !d.IsDir() {
+			rel = strings.TrimSuffix(rel, ".tmpl")
+		}
 		target := filepath.Join(dst, rel)
 		if d.IsDir() {
 			return os.MkdirAll(target, 0o755)
@@ -205,6 +95,10 @@ func copyTree(src fs.FS, root, dst string) error {
 			return err
 		}
 		mode := fs.FileMode(0o644)
+		// embed.FS normalizes permissions, so restore runnable shell scripts.
+		if filepath.Ext(rel) == ".sh" {
+			mode = 0o755
+		}
 		if info, e := d.Info(); e == nil && info.Mode()&0o111 != 0 {
 			mode = 0o755
 		}
