@@ -2,6 +2,20 @@
 
 This guide covers the Foundry executable, development of Foundry itself, and commands inside generated projects. Run `foundry help` for CLI syntax, `make help` in either Make-based project for targets, and a shell script with `--help` for its inputs. Rust's PowerShell script uses `-Help`.
 
+## Choose a command category
+
+The [workspace guide](workspaces.md) explains which commands apply to each workspace and gives creation-to-validation recipes. This page is the detailed reference.
+
+| Category | Scope | Reference |
+| --- | --- | --- |
+| Discovery | Any directory: help, templates, version, tool availability | [Inspect and generate](#inspect-and-generate) |
+| Creation | Parent folder: interactive generation or `new` | [Creation flags and delivery](#inspect-and-generate) |
+| Go scaffolding | Generated Go root: service, repository, use case, proto, migration | [Extend a project](#extend-a-project) |
+| Flutter scaffolding | Workspace root: feature, package, Mason bricks | [Extend a project](#extend-a-project) |
+| Maintenance | Generated roots: read-only template version comparison | [Maintenance and errors](#maintenance-and-errors) |
+| Workspace development | Native tools for setup, run, format, lint, test, build, clean | Sections 5–8 below |
+| Foundry development and distribution | This repository's Make targets, smoke tests, executable release archives | [Develop and release Foundry](#4-develop-and-release-foundry) |
+
 ## 1. Shared command meanings
 
 Use each ecosystem's native command. The names differ where the ecosystem already has a standard; their responsibilities are consistent.
