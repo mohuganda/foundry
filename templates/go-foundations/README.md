@@ -339,7 +339,7 @@ Go excludes nested modules from embedded directories, so Foundry bundles this te
 
 ```bash
 go run ./cmd/foundry template pack ./templates/go-foundations \
-  --id go-grpc-clean --version 1.0.0 --kind go \
+  --id go-foundations --version 1.0.0 --kind go \
   --out ./templates/go-foundations.zip
 ```
 

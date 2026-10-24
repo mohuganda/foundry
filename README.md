@@ -14,7 +14,7 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 
 ## Bundled templates
 
-- `go-grpc-clean` (`go`, `grpc`, `backend`) — Go, gRPC, Protobuf, Clean Architecture, PostgreSQL, local JWT, optional OIDC, local RBAC, OpenTelemetry, Prometheus, Docker, migrations and tests.
+- `go-foundations` (`go`, `grpc`, `backend`) — Go, gRPC, Protobuf, Clean Architecture, PostgreSQL, local JWT, optional OIDC, local RBAC, OpenTelemetry, Prometheus, Docker, migrations and tests.
 - `flutter-foundations` (`flutter`, `mobile`, `app`) — Flutter, Riverpod, go_router, Dio, Melos, Mason-ready feature generation and reusable foundation packages.
 
 ## Install
@@ -138,13 +138,13 @@ Registry format:
   "updated_at": "2026-08-14T12:00:00Z",
   "templates": [
     {
-      "id": "go-grpc-clean",
-      "name": "Go gRPC Clean Architecture",
+      "id": "go-foundations",
+      "name": "Go Foundations",
       "version": "1.2.0",
       "description": "Production Go gRPC foundation",
       "kind": "go",
       "aliases": ["go", "grpc", "backend"],
-      "url": "https://github.com/your-org/foundry-templates/releases/download/go-grpc-clean-v1.2.0/go-grpc-clean.zip",
+      "url": "https://github.com/your-org/foundry-templates/releases/download/go-foundations-v1.2.0/go-foundations.zip",
       "sha256": "<sha256-of-the-zip>"
     }
   ]
@@ -159,7 +159,7 @@ Cache layout is platform-specific under the operating system's standard user-cac
 foundry/
 ├── registry.json
 └── templates/
-    └── go-grpc-clean/
+    └── go-foundations/
         └── 1.2.0/
             └── template.zip
 ```

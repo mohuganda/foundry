@@ -19,7 +19,7 @@ type Template struct {
 
 var templates = []Template{
 	{
-		ID: "go-grpc-clean", Name: "Go gRPC Clean Architecture", Version: "1.0.0",
+		ID: "go-foundations", Name: "Go Foundations", Version: "1.0.0",
 		Description: "Go + gRPC + Protobuf + PostgreSQL + local JWT + optional OIDC + local RBAC + observability",
 		Aliases:     []string{"go", "grpc", "backend"}, EmbeddedArchive: "templates/go-foundations.zip", Kind: "go",
 	},

@@ -84,7 +84,7 @@ func (a App) interactive() int {
 		fmt.Fprintln(os.Stderr, "project name required")
 		return 2
 	}
-	fmt.Println("Template:\n  1) Go gRPC Clean Architecture\n  2) Flutter Foundations")
+	fmt.Println("Template:\n  1) Go Foundations\n  2) Flutter Foundations")
 	fmt.Print("Select [1]: ")
 	choice, _ := r.ReadString('\n')
 	choice = strings.TrimSpace(choice)
