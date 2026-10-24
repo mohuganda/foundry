@@ -32,6 +32,30 @@ archives are built for:
 Download the archive for your platform from GitHub Releases, verify it against
 `SHA256SUMS`, extract it, and place `foundry` (or `foundry.exe`) on your `PATH`.
 
+### Homebrew (macOS and Linux)
+
+```sh
+brew tap mohuganda/foundry https://github.com/mohuganda/foundry
+brew install mohuganda/foundry/foundry
+foundry version
+```
+
+The tap uses this repository's `Formula/` directory and installs verified release binaries for Apple Silicon/Intel macOS and arm64/amd64 Linux. Upgrade with `brew update && brew upgrade mohuganda/foundry/foundry`.
+
+### Docker (Linux containers)
+
+```sh
+docker run --rm ghcr.io/mohuganda/foundry:1.3.0 version
+# From the parent directory where the generated project should be written:
+docker run --rm --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=$(pwd),target=/workspace" \
+  ghcr.io/mohuganda/foundry:1.3.0 new my-api --template go --no-hooks
+```
+
+Images support linux/amd64 and linux/arm64. Pin a version for reproducibility; `latest` follows the latest stable release. The image contains the CLI and embedded templates. Install language SDKs and run generated-project development commands on the host or in a separate development container. Use `--no-hooks` because generation hooks need SDKs that this image does not include. See [distribution details](docs/distribution.md) for Windows mounts, interactive use, and publishing.
+
+### Go source installation
+
 Install directly from source with Go 1.23 or newer:
 
 ```bash

@@ -1,0 +1,106 @@
+name: Distribute release
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing stable release tag to distribute (for example v1.3.0)
+        required: true
+        default: v1.3.0
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distribute-release
+  cancel-in-progress: false
+
+jobs:
+  distribute:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve published release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.inputs.version || github.event.workflow_run.head_branch }}
+        shell: bash
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Only stable vX.Y.Z tags are supported.'; exit 1; }
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq 'if .isDraft or .isPrerelease then error("Expected a published stable release") else . end'
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          if [[ "$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)" == "$RELEASE_TAG" ]]; then
+            echo "latest-tag=$image:latest" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+          path: source
+          persist-credentials: false
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and test the native container
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          docker build --build-arg VERSION="$VERSION" -f Dockerfile -t foundry:test source
+          ./scripts/test-docker.sh foundry:test
+          test "$(docker run --rm foundry:test version)" = "foundry $VERSION"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish multi-platform image
+        uses: docker/build-push-action@v6
+        with:
+          context: source
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: VERSION=${{ steps.release.outputs.version }}
+          push: true
+          tags: |
+            ${{ steps.release.outputs.image }}:${{ steps.release.outputs.version }}
+            ${{ steps.release.outputs.latest-tag }}
+      - name: Update the Homebrew tap for the latest stable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          latest=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          if [[ "$latest" != "$RELEASE_TAG" ]]; then
+            echo 'Historical image published; retaining the latest Homebrew version.'
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/homebrew-release"
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern SHA256SUMS --dir "$RUNNER_TEMP/homebrew-release"
+          ./scripts/homebrew-formula.sh "$RELEASE_TAG" "$RUNNER_TEMP/homebrew-release/SHA256SUMS" > "$RUNNER_TEMP/foundry.rb"
+          ruby -c "$RUNNER_TEMP/foundry.rb"
+          branch=$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)
+          endpoint="repos/$GITHUB_REPOSITORY/contents/Formula/foundry.rb"
+          current=$(gh api "$endpoint?ref=$branch" --jq .sha)
+          if [[ "$(git hash-object "$RUNNER_TEMP/foundry.rb")" == "$current" ]]; then
+            echo 'Homebrew formula is already current.'
+            exit 0
+          fi
+          gh api "$endpoint" --method PUT \
+            -f message="chore: update Homebrew to $RELEASE_TAG [skip ci]" \
+            -f branch="$branch" -f sha="$current" \
+            -f content="$(base64 -w 0 "$RUNNER_TEMP/foundry.rb")" --silent

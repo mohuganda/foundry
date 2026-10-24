@@ -1,0 +1,13 @@
+.git
+.github
+bin
+dist
+Formula
+**/node_modules
+**/target
+**/dist
+**/coverage
+**/.dart_tool
+**/.fvm
+**/.mason
+**/.DS_Store

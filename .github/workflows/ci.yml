@@ -110,3 +110,33 @@ jobs:
         shell: pwsh
         run: ./scripts/check.ps1
         working-directory: ${{ runner.temp }}/foundry-rust
+
+  docker:
+    name: Docker distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --build-arg VERSION=ci -t foundry:test .
+      - run: ./scripts/test-docker.sh foundry:test
+      - run: test "$(docker run --rm foundry:test version)" = 'foundry ci'
+
+  homebrew:
+    name: Homebrew distribution
+    runs-on: macos-latest
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check and install the release formula
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^  version "\(.*\)"/\1/p' Formula/foundry.rb)
+          gh release download "v$version" --repo "$GITHUB_REPOSITORY" --pattern SHA256SUMS --dir "$RUNNER_TEMP/homebrew-release"
+          ./scripts/homebrew-formula.sh "$version" "$RUNNER_TEMP/homebrew-release/SHA256SUMS" > "$RUNNER_TEMP/foundry.rb"
+          diff -u Formula/foundry.rb "$RUNNER_TEMP/foundry.rb"
+          ruby -c Formula/foundry.rb
+          brew tap --custom-remote mohuganda/foundry "$GITHUB_WORKSPACE"
+          brew install mohuganda/foundry/foundry
+          brew test mohuganda/foundry/foundry

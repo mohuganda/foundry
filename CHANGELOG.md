@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add a Homebrew tap backed by this repository's Formula directory and verified macOS/Linux release archives.
+- Add a non-root Docker image with all five embedded foundations, offline generation tests, and multi-platform GHCR publishing after stable releases.
+- Automate Homebrew version/checksum updates after successful release publication and document distribution usage and maintenance.
+
 ## 1.3.0 - 2026-10-24
 
 ### Compatibility notes
