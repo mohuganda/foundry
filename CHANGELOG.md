@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 1.3.0 - 2026-10-24
+
+### Compatibility notes
+
+- Template ZIP delivery, external registries, downloads, caches, and their CLI commands are retired. Generate projects from the five source foundations bundled in the executable; `--version` only asserts the bundled template version.
+- Existing generated projects remain independent copies. `foundry upgrade --check` compares recorded and bundled versions without modifying project files.
+
+### Changes
+
+- Categorize CLI help by purpose and workspace; document root selection, supported generators, and complete workflows for all five templates.
+
 - Align quality command meanings across the CLI repository and all five foundations; retain existing Make/Melos aliases.
 - Add comprehensive command/workflow documentation, script help, CWD-independent helpers, and native PowerShell Rust checks.
 - Make Go contract generation explicit, isolate smoke tests, and checksum only the current release's six executable archives.
