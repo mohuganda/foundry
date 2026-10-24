@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Deliver all templates as embedded source files and restore `.tmpl` filenames during generation.
+- Remove template ZIP packaging, downloads, external registries, and cache commands.
+- Resolve template version checks and upgrade reports from the bundled registry only.
+
 ## 1.2.0 - 2026-08-30
 
 - Remove checked-in build artifacts and an orphan generated application file.

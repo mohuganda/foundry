@@ -4,13 +4,11 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 
 ## Highlights
 
-- external, versioned template registry support
-- SHA-256 verified template ZIP downloads
-- local template cache and offline generation
-- `foundry template update` / `foundry template list`
+- Go and Flutter templates bundled directly as source files in one executable
+- offline project generation with no template downloads or packaging step
+- `foundry template list` to inspect the bundled templates
 - `foundry add service` and `foundry add migration` for Go projects
 - `foundry add feature` and `foundry add package` for Flutter workspaces
-- bundled templates remain available without a registry or network connection
 
 ## Bundled templates
 
@@ -75,20 +73,7 @@ foundry new mediguide \
   --org ug.go.health
 ```
 
-Select an external/cached version:
-
-```bash
-foundry new users-service \
-  --template go \
-  --version 1.2.0 \
-  --module github.com/your-org/users-service
-```
-
-Force offline operation:
-
-```bash
-foundry new users-service --template go --version 1.2.0 --offline
-```
+Both templates are available offline. Optional generation hooks may invoke installed SDKs and their package managers; use `--no-hooks` to skip them.
 
 ## Extend an existing project
 
@@ -112,68 +97,20 @@ foundry add package foundation_analytics
 
 A Flutter feature is created as a small clean slice with `domain`, `application`, `data`, and `presentation` directories.
 
-## External template registry
+## Template delivery
 
-Foundry does not require a registry. The built-in templates always remain available. A registry lets templates evolve independently from the Foundry binary.
+All templates are maintained under `templates/` and embedded directly into the Foundry executable. Generation copies their files, restores template filenames, and substitutes project settings.
 
-Configure it once:
+| Template | Source folder | Delivery |
+| --- | --- | --- |
+| Go Foundations | `templates/go-foundations/` | Embedded source files |
+| Flutter Foundations | `templates/flutter_foundations/` | Embedded source files |
 
-```bash
-export FOUNDRY_REGISTRY_URL="https://raw.githubusercontent.com/your-org/foundry-templates/main/registry.json"
-foundry template update
-foundry template list
-```
+Go source files use `.go.tmpl` and its module manifest uses `go.mod.tmpl` to keep the template separate from Foundry's Go module. Generated projects receive ordinary `.go` files and `go.mod`.
 
-or provide the URL explicitly:
+Template changes ship with a new Foundry build/release. There is no external template registry, template archive download, or template cache. `foundry template list` shows the available versions; `--version` can assert the bundled version but cannot select an external release.
 
-```bash
-foundry template update --registry https://example.org/foundry/registry.json
-```
-
-Registry format:
-
-```json
-{
-  "schema": 1,
-  "updated_at": "2026-08-14T12:00:00Z",
-  "templates": [
-    {
-      "id": "go-foundations",
-      "name": "Go Foundations",
-      "version": "1.2.0",
-      "description": "Production Go gRPC foundation",
-      "kind": "go",
-      "aliases": ["go", "grpc", "backend"],
-      "url": "https://github.com/your-org/foundry-templates/releases/download/go-foundations-v1.2.0/go-foundations.zip",
-      "sha256": "<sha256-of-the-zip>"
-    }
-  ]
-}
-```
-
-The `url` can be a GitHub Release asset or any direct HTTP(S) ZIP. Foundry verifies the downloaded archive against `sha256` before adding it to the cache.
-
-Cache layout is platform-specific under the operating system's standard user-cache directory:
-
-```text
-foundry/
-├── registry.json
-└── templates/
-    └── go-foundations/
-        └── 1.2.0/
-            └── template.zip
-```
-
-Set `FOUNDRY_CACHE_DIR` to use an explicit cache location, which is useful in
-CI, containers, and other isolated environments.
-
-Once downloaded:
-
-```bash
-foundry new demo --template go --version 1.2.0 --offline
-```
-
-works without a network connection.
+To update a template, edit its source files and rebuild Foundry with `make build`.
 
 ## Commands
 
@@ -185,12 +122,9 @@ foundry add migration <name>
 foundry add feature <name>
 foundry add package <name>
 foundry template list
-foundry template update --registry <url>
 foundry list
 foundry info <template>
 foundry doctor
-foundry cache list
-foundry cache clean
 foundry version
 ```
 
@@ -200,8 +134,7 @@ foundry version
 --module       Go module path
 --org          Flutter organization identifier
 --package      Flutter package token
---version      external/cached template version
---offline      do not download missing templates
+--version      require this bundled template version
 --destination  output path
 --force        generate into a non-empty directory
 --no-hooks     skip post-generation hooks
@@ -213,11 +146,6 @@ foundry version
 Foundry CLI
    |
    +-- built-in registry
-   +-- external registry
-   |      `-- SHA-256 verified releases
-   |
-   +-- template cache
-   |
    +-- project generator
    |      +-- Go foundation
    |      `-- Flutter foundation
@@ -228,8 +156,7 @@ Foundry CLI
    |      +-- Flutter feature
    |      `-- Flutter package
    |
-   +-- doctor
-   `-- cache
+   `-- doctor
 ```
 
 Authentication/RBAC choices belong to the generated Go foundation, not to Foundry itself. Flutter's platform folders are generated using the installed Flutter SDK before the foundation overlay is applied when Flutter is available.
@@ -243,7 +170,7 @@ make build
 make smoke
 ```
 
-`go test ./...` includes tests for registry fetching/caching/checksum validation and the Go/Flutter add generators.
+`go test ./...` checks bundled template generation, module substitution, CLI behavior, and the Go/Flutter add generators.
 
 ### Releases
 
@@ -267,7 +194,7 @@ Every newly generated project now includes `.foundry.yaml`, recording the templa
 foundry upgrade --check
 ```
 
-The v1.2 upgrade command is intentionally read-only: it compares the project template version with bundled/cached registry releases and reports whether an update is available.
+The v1.2 upgrade command is intentionally read-only: it compares the project template version with the bundled template version and reports whether an update is available.
 
 Additional Go generators:
 
@@ -282,16 +209,3 @@ Flutter Mason bricks can be invoked consistently through Foundry:
 ```bash
 foundry mason feature --name profile
 ```
-
-Template maintainers can create versioned release archives and SHA-256 checksums:
-
-```bash
-foundry template pack ./my-template \
-  --id my-template \
-  --version 1.0.0 \
-  --kind go \
-  --out my-template-1.0.0.zip
-```
-
-If `--url` is supplied, Foundry also prints a registry JSON entry containing the generated SHA-256 digest.
-# foundry

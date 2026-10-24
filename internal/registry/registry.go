@@ -7,21 +7,20 @@ import (
 )
 
 type Template struct {
-	ID              string
-	Name            string
-	Version         string
-	Description     string
-	Aliases         []string
-	EmbeddedDir     string
-	EmbeddedArchive string
-	Kind            string
+	ID          string
+	Name        string
+	Version     string
+	Description string
+	Aliases     []string
+	EmbeddedDir string
+	Kind        string
 }
 
 var templates = []Template{
 	{
 		ID: "go-foundations", Name: "Go Foundations", Version: "1.0.0",
 		Description: "Go + gRPC + Protobuf + PostgreSQL + local JWT + optional OIDC + local RBAC + observability",
-		Aliases:     []string{"go", "grpc", "backend"}, EmbeddedArchive: "templates/go-foundations.zip", Kind: "go",
+		Aliases:     []string{"go", "grpc", "backend"}, EmbeddedDir: "templates/go-foundations", Kind: "go",
 	},
 	{
 		ID: "flutter-foundations", Name: "Flutter Foundations", Version: "1.0.0",
