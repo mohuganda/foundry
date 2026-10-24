@@ -52,6 +52,7 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 	vars := map[string]string{
 		"go-foundations":             defaultString(o.Module, sanitize(o.Name)),
 		"example.com/go-foundations": defaultString(o.Module, sanitize(o.Name)),
+		"__RUST_CRATE__":             rustCrateName(o.Name),
 		"__PROJECT_NAME__":           sanitize(o.Name),
 		"__ORG__":                    defaultString(o.Org, "com.example"),
 		"__PACKAGE__":                defaultString(o.Package, sanitize(o.Name)),
@@ -107,10 +108,11 @@ func copyTree(src fs.FS, root, dst string) error {
 }
 
 func replaceText(root string, vars map[string]string) error {
-	exts := map[string]bool{".html": true, ".js": true, ".jsx": true, ".mjs": true, ".css": true, ".go": true, ".mod": true, ".sum": true, ".proto": true, ".yaml": true, ".yml": true, ".json": true, ".md": true, ".sql": true, ".env": true, ".example": true, ".dart": true, ".xml": true, ".gradle": true, ".properties": true, ".toml": true, ".makefile": true, ".tmpl": true}
+	exts := map[string]bool{".rs": true, ".lock": true, ".html": true, ".js": true, ".jsx": true, ".mjs": true, ".css": true, ".go": true, ".mod": true, ".sum": true, ".proto": true, ".yaml": true, ".yml": true, ".json": true, ".md": true, ".sql": true, ".env": true, ".example": true, ".dart": true, ".xml": true, ".gradle": true, ".properties": true, ".toml": true, ".makefile": true, ".tmpl": true}
 	ordered := [][2]string{
 		{"example.com/go-foundations", vars["example.com/go-foundations"]},
 		{"go-foundations", vars["go-foundations"]},
+		{"__RUST_CRATE__", vars["__RUST_CRATE__"]},
 		{"__PROJECT_NAME__", vars["__PROJECT_NAME__"]},
 		{"__ORG__", vars["__ORG__"]},
 		{"__PACKAGE__", vars["__PACKAGE__"]},
@@ -200,6 +202,17 @@ func sanitize(s string) string {
 	}
 	return b.String()
 }
+
+// rustCrateName produces an identifier usable in package, library, and binary names.
+func rustCrateName(name string) string {
+	name = sanitize(name)
+	reserved := " as async await break const continue crate dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return self static struct super trait true type unsafe use where while abstract become box do final gen macro override priv typeof unsized virtual yield try union std core alloc test proc_macro build deps examples incremental con prn aux nul com1 com2 com3 com4 com5 com6 com7 com8 com9 lpt1 lpt2 lpt3 lpt4 lpt5 lpt6 lpt7 lpt8 lpt9 "
+	if name == "_" || (name[0] >= '0' && name[0] <= '9') || strings.Contains(reserved, " "+name+" ") {
+		return "app_" + name
+	}
+	return name
+}
+
 func defaultString(v, d string) string {
 	if strings.TrimSpace(v) == "" {
 		return d

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add embedded Rust 2024 foundations with a thin CLI, reusable library, feature modules, typed errors, unit/integration/doc tests, rustfmt, and Clippy.
+- Validate generated Rust projects across Linux, macOS, Windows, and the minimum Rust version.
+
 - Complete the project metadata package rename from `internal/projectconfig` to `internal/config`.
 
 - Add embedded Vanilla JavaScript and React foundations with Vite, feature-first structure, reproducible npm installs, linting, formatting, behavior tests, and production builds.

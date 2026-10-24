@@ -46,4 +46,7 @@ import "embed"
 //go:embed templates/react-foundations/*.config.js templates/react-foundations/README.md all:templates/react-foundations/public
 //go:embed templates/react-foundations/.editorconfig templates/react-foundations/.env.example templates/react-foundations/.gitignore
 //go:embed templates/react-foundations/.nvmrc templates/react-foundations/.prettierignore templates/react-foundations/.prettierrc.json
+//go:embed templates/rust-foundations/src templates/rust-foundations/tests templates/rust-foundations/Cargo.*
+//go:embed templates/rust-foundations/rust-toolchain.toml templates/rust-foundations/README.md
+//go:embed templates/rust-foundations/.gitignore templates/rust-foundations/.editorconfig templates/rust-foundations/.cargo
 var Templates embed.FS

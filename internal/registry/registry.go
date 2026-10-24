@@ -37,6 +37,11 @@ var templates = []Template{
 		Description: "React + JavaScript + Vite + feature-first components + Hooks linting + Testing Library + Vitest",
 		Aliases:     []string{"react"}, EmbeddedDir: "templates/react-foundations", Kind: "react",
 	},
+	{
+		ID: "rust-foundations", Name: "Rust Foundations", Version: "1.0.0",
+		Description: "Rust 2024 + reusable library + CLI adapter + feature modules + typed errors + Cargo tests + Clippy",
+		Aliases:     []string{"rust", "rs"}, EmbeddedDir: "templates/rust-foundations", Kind: "rust",
+	},
 }
 
 func All() []Template {

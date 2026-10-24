@@ -16,7 +16,7 @@ import (
 )
 
 func TestBundledTemplatesGenerate(t *testing.T) {
-	for _, name := range []string{"go", "flutter", "vanilla-js", "react"} {
+	for _, name := range []string{"go", "flutter", "vanilla-js", "react", "rust"} {
 		t.Run(name, func(t *testing.T) {
 			tmpl, err := registry.Find(name)
 			if err != nil {
@@ -34,7 +34,7 @@ func TestBundledTemplatesGenerate(t *testing.T) {
 				if strings.HasSuffix(path, ".tmpl") {
 					t.Errorf("unrestored template filename: %s", path)
 				}
-				if d.IsDir() && (d.Name() == ".dart_tool" || d.Name() == ".fvm" || d.Name() == ".mason" || d.Name() == "node_modules" || d.Name() == "dist") {
+				if d.IsDir() && (d.Name() == ".dart_tool" || d.Name() == ".fvm" || d.Name() == ".mason" || d.Name() == "node_modules" || d.Name() == "dist" || d.Name() == "target") {
 					t.Errorf("local tool cache delivered: %s", path)
 				}
 				return nil
@@ -65,6 +65,8 @@ func TestBundledTemplatesGenerate(t *testing.T) {
 			file, expected := "pubspec.yaml", "name: flutter_foundation_workspace"
 			if name == "go" {
 				file, expected = "go.mod", "module demo\n"
+			} else if name == "rust" {
+				file, expected = "Cargo.toml", `name = "demo"`
 			} else if name == "vanilla-js" || name == "react" {
 				file, expected = "package.json", `"name": "demo"`
 			}
@@ -167,6 +169,50 @@ func TestWebTemplatesSubstituteProjectSettings(t *testing.T) {
 			}
 			if config.Kind != tmpl.Kind || config.Template != tmpl.ID {
 				t.Fatalf("wrong project metadata: %#v", config)
+			}
+		})
+	}
+}
+
+func TestRustCrateName(t *testing.T) {
+	cases := map[string]string{
+		"My Service": "my_service", "123 App": "app_123_app", "type": "app_type", "gen": "app_gen",
+		"Self": "app_self", "_": "app__", "std": "app_std", "COM1": "app_com1", "": "app",
+	}
+	for name, want := range cases {
+		if got := rustCrateName(name); got != want {
+			t.Errorf("rustCrateName(%q) = %q, want %q", name, got, want)
+		}
+	}
+}
+
+func TestRustTemplateSubstitutesCrateName(t *testing.T) {
+	tmpl, err := registry.Find("rust")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"My Service", "type", "123 App"} {
+		t.Run(name, func(t *testing.T) {
+			dest := t.TempDir()
+			if err := (Generator{FS: foundry.Templates}).Generate(tmpl, Options{Name: name, Destination: dest, NoHooks: true}); err != nil {
+				t.Fatal(err)
+			}
+			want := rustCrateName(name)
+			for _, file := range []string{"Cargo.toml", "Cargo.lock", "src/main.rs", "src/features/greeting/service.rs", "tests/cli.rs", "README.md"} {
+				data, err := os.ReadFile(filepath.Join(dest, file))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !strings.Contains(string(data), want) || strings.Contains(string(data), "__RUST_CRATE__") {
+					t.Errorf("crate name not substituted in %s", file)
+				}
+			}
+			metadata, err := config.Read(dest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if metadata.Kind != "rust" || metadata.Template != "rust-foundations" {
+				t.Fatalf("unexpected metadata: %#v", metadata)
 			}
 		})
 	}
