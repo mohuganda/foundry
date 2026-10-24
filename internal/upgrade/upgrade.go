@@ -3,7 +3,7 @@ package upgrade
 import (
 	"fmt"
 
-	"github.com/jabahum/foundry/internal/projectconfig"
+	"github.com/jabahum/foundry/internal/config"
 	"github.com/jabahum/foundry/internal/registry"
 )
 
@@ -13,7 +13,7 @@ type Report struct {
 }
 
 func Check(root string) (Report, error) {
-	c, err := projectconfig.Read(root)
+	c, err := config.Read(root)
 	if err != nil {
 		return Report{}, err
 	}

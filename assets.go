@@ -38,4 +38,12 @@ import "embed"
 //go:embed all:templates/flutter_foundations/pubspec.lock
 //go:embed all:templates/flutter_foundations/pubspec.yaml
 //go:embed all:templates/flutter_foundations/scripts
+//go:embed templates/vanilla-js-foundations/src templates/vanilla-js-foundations/index.html templates/vanilla-js-foundations/package*.json
+//go:embed templates/vanilla-js-foundations/*.config.js templates/vanilla-js-foundations/README.md all:templates/vanilla-js-foundations/public
+//go:embed templates/vanilla-js-foundations/.editorconfig templates/vanilla-js-foundations/.env.example templates/vanilla-js-foundations/.gitignore
+//go:embed templates/vanilla-js-foundations/.nvmrc templates/vanilla-js-foundations/.prettierignore templates/vanilla-js-foundations/.prettierrc.json
+//go:embed templates/react-foundations/src templates/react-foundations/index.html templates/react-foundations/package*.json
+//go:embed templates/react-foundations/*.config.js templates/react-foundations/README.md all:templates/react-foundations/public
+//go:embed templates/react-foundations/.editorconfig templates/react-foundations/.env.example templates/react-foundations/.gitignore
+//go:embed templates/react-foundations/.nvmrc templates/react-foundations/.prettierignore templates/react-foundations/.prettierrc.json
 var Templates embed.FS

@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -10,11 +11,12 @@ import (
 	"testing/fstest"
 
 	"github.com/jabahum/foundry"
+	"github.com/jabahum/foundry/internal/config"
 	"github.com/jabahum/foundry/internal/registry"
 )
 
 func TestBundledTemplatesGenerate(t *testing.T) {
-	for _, name := range []string{"go", "flutter"} {
+	for _, name := range []string{"go", "flutter", "vanilla-js", "react"} {
 		t.Run(name, func(t *testing.T) {
 			tmpl, err := registry.Find(name)
 			if err != nil {
@@ -32,7 +34,7 @@ func TestBundledTemplatesGenerate(t *testing.T) {
 				if strings.HasSuffix(path, ".tmpl") {
 					t.Errorf("unrestored template filename: %s", path)
 				}
-				if d.IsDir() && (d.Name() == ".dart_tool" || d.Name() == ".fvm" || d.Name() == ".mason") {
+				if d.IsDir() && (d.Name() == ".dart_tool" || d.Name() == ".fvm" || d.Name() == ".mason" || d.Name() == "node_modules" || d.Name() == "dist") {
 					t.Errorf("local tool cache delivered: %s", path)
 				}
 				return nil
@@ -47,7 +49,7 @@ func TestBundledTemplatesGenerate(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			if runtime.GOOS != "windows" {
+			if runtime.GOOS != "windows" && (name == "go" || name == "flutter") {
 				script := "scripts/setup.sh"
 				if name == "go" {
 					script = "scripts/generate-dev-keys.sh"
@@ -63,6 +65,8 @@ func TestBundledTemplatesGenerate(t *testing.T) {
 			file, expected := "pubspec.yaml", "name: flutter_foundation_workspace"
 			if name == "go" {
 				file, expected = "go.mod", "module demo\n"
+			} else if name == "vanilla-js" || name == "react" {
+				file, expected = "package.json", `"name": "demo"`
 			}
 			data, err := os.ReadFile(filepath.Join(dest, file))
 			if err != nil {
@@ -116,5 +120,54 @@ func TestSanitize(t *testing.T) {
 		if got := sanitize(in); got != want {
 			t.Fatalf("sanitize(%q)=%q want %q", in, got, want)
 		}
+	}
+}
+
+func TestWebTemplatesSubstituteProjectSettings(t *testing.T) {
+	for _, name := range []string{"vanilla-js", "react"} {
+		t.Run(name, func(t *testing.T) {
+			tmpl, err := registry.Find(name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			dest := t.TempDir()
+			if err := (Generator{FS: foundry.Templates}).Generate(tmpl, Options{Name: "Customer Portal", Destination: dest, NoHooks: true}); err != nil {
+				t.Fatal(err)
+			}
+			for _, file := range []string{"package.json", "package-lock.json"} {
+				data, err := os.ReadFile(filepath.Join(dest, file))
+				if err != nil {
+					t.Fatal(err)
+				}
+				var manifest struct {
+					Name string `json:"name"`
+				}
+				if err := json.Unmarshal(data, &manifest); err != nil {
+					t.Fatal(err)
+				}
+				if manifest.Name != "customer_portal" {
+					t.Fatalf("%s: unexpected package name %q", file, manifest.Name)
+				}
+				if strings.Contains(string(data), "__PROJECT_NAME__") {
+					t.Errorf("unreplaced name in %s", file)
+				}
+			}
+			for _, file := range []string{"index.html", "src/shared/config/env.js", "README.md"} {
+				data, err := os.ReadFile(filepath.Join(dest, file))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !strings.Contains(string(data), "customer_portal") || strings.Contains(string(data), "__PROJECT_NAME__") {
+					t.Errorf("project name missing from %s", file)
+				}
+			}
+			config, err := config.Read(dest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if config.Kind != tmpl.Kind || config.Template != tmpl.ID {
+				t.Fatalf("wrong project metadata: %#v", config)
+			}
+		})
 	}
 }

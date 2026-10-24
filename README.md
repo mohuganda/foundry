@@ -4,7 +4,7 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 
 ## Highlights
 
-- Go and Flutter templates bundled directly as source files in one executable
+- Go, Flutter, Vanilla JavaScript, and React templates bundled directly as source files in one executable
 - offline project generation with no template downloads or packaging step
 - `foundry template list` to inspect the bundled templates
 - `foundry add service` and `foundry add migration` for Go projects
@@ -14,6 +14,8 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 
 - `go-foundations` (`go`, `grpc`, `backend`) — Go, gRPC, Protobuf, Clean Architecture, PostgreSQL, local JWT, optional OIDC, local RBAC, OpenTelemetry, Prometheus, Docker, migrations and tests.
 - `flutter-foundations` (`flutter`, `mobile`, `app`) — Flutter, Riverpod, go_router, Dio, Melos, Mason-ready feature generation and reusable foundation packages.
+- `vanilla-js-foundations` (`vanilla-js`, `vanilla`, `javascript`, `js`) — JavaScript ES modules, Vite, feature-first DOM components, ESLint, Prettier, Vitest, and Testing Library.
+- `react-foundations` (`react`) — React with JavaScript, Vite, feature-first components, Hooks linting, ESLint, Prettier, Vitest, and Testing Library.
 
 ## Install
 
@@ -73,7 +75,27 @@ foundry new mediguide \
   --org ug.go.health
 ```
 
-Both templates are available offline. Optional generation hooks may invoke installed SDKs and their package managers; use `--no-hooks` to skip them.
+Vanilla JavaScript:
+
+```bash
+foundry new website --template vanilla-js
+cd website
+npm ci
+npm run dev
+```
+
+React (JavaScript):
+
+```bash
+foundry new dashboard --template react
+cd dashboard
+npm ci
+npm run dev
+```
+
+The web templates use Node.js 22.18+ on the 22.x line, Node 24, or a newer supported even-numbered release. They include a feature-first `src/app`, `src/pages`, `src/features`, and `src/shared` structure, colocated tests, public environment configuration, reusable UI/styles, and an HTTP helper. Run `npm run check` for formatting, lint, tests, and a production build. Dependency installation is explicit; Foundry does not run npm automatically.
+
+All templates are available offline. Optional generation hooks may invoke installed SDKs and their package managers; use `--no-hooks` to skip them.
 
 ## Extend an existing project
 
@@ -105,6 +127,8 @@ All templates are maintained under `templates/` and embedded directly into the F
 | --- | --- | --- |
 | Go Foundations | `templates/go-foundations/` | Embedded source files |
 | Flutter Foundations | `templates/flutter_foundations/` | Embedded source files |
+| Vanilla JavaScript Foundations | `templates/vanilla-js-foundations/` | Embedded source files |
+| React Foundations | `templates/react-foundations/` | Embedded source files |
 
 Go source files use `.go.tmpl` and its module manifest uses `go.mod.tmpl` to keep the template separate from Foundry's Go module. Generated projects receive ordinary `.go` files and `go.mod`.
 
@@ -116,7 +140,7 @@ To update a template, edit its source files and rebuild Foundry with `make build
 
 ```text
 foundry
-foundry new <name> --template <go|flutter>
+foundry new <name> --template <go|flutter|vanilla-js|react>
 foundry add service <name>
 foundry add migration <name>
 foundry add feature <name>
@@ -148,7 +172,9 @@ Foundry CLI
    +-- built-in registry
    +-- project generator
    |      +-- Go foundation
-   |      `-- Flutter foundation
+   |      +-- Flutter foundation
+   |      +-- Vanilla JavaScript foundation
+   |      `-- React foundation
    |
    +-- add generators
    |      +-- Go service
@@ -170,7 +196,7 @@ make build
 make smoke
 ```
 
-`go test ./...` checks bundled template generation, module substitution, CLI behavior, and the Go/Flutter add generators.
+`go test ./...` checks generation of all four bundled templates, project setting substitution, CLI behavior, and the Go/Flutter add generators. Web-template CI generates fresh projects and runs `npm ci` and `npm run check` on Node 22 and 24.
 
 ### Releases
 

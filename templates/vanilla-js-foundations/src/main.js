@@ -1,0 +1,8 @@
+import { mountApp } from './app/app.js';
+import './shared/styles/global.css';
+
+const root = document.querySelector('#app');
+if (!root) throw new Error('Application root #app is missing.');
+const unmount = mountApp(root);
+
+if (import.meta.hot) import.meta.hot.dispose(unmount);

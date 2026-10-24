@@ -79,13 +79,22 @@ func (a App) interactive() int {
 		fmt.Fprintln(os.Stderr, "project name required")
 		return 2
 	}
-	fmt.Println("Template:\n  1) Go Foundations\n  2) Flutter Foundations")
+	fmt.Println("Template:\n  1) Go Foundations\n  2) Flutter Foundations\n  3) Vanilla JavaScript Foundations\n  4) React Foundations")
 	fmt.Print("Select [1]: ")
 	choice, _ := r.ReadString('\n')
 	choice = strings.TrimSpace(choice)
 	tmpl := "go"
-	if choice == "2" {
+	switch choice {
+	case "", "1":
+	case "2":
 		tmpl = "flutter"
+	case "3":
+		tmpl = "vanilla-js"
+	case "4":
+		tmpl = "react"
+	default:
+		fmt.Fprintln(os.Stderr, "select a template from 1 to 4")
+		return 2
 	}
 	return a.newCmd([]string{name, "--template", tmpl})
 }
@@ -98,7 +107,7 @@ func (a App) newCmd(args []string) int {
 	}
 	f := flag.NewFlagSet("new", flag.ContinueOnError)
 	f.SetOutput(os.Stderr)
-	tmpl := f.String("template", "", "template: go or flutter")
+	tmpl := f.String("template", "", "template: go, flutter, vanilla-js, or react")
 	version := f.String("version", "", "template version; defaults to bundled version")
 	module := f.String("module", "", "Go module path")
 	org := f.String("org", "", "Flutter organization, e.g. ug.go.health")
@@ -113,11 +122,11 @@ func (a App) newCmd(args []string) int {
 		name = f.Args()[0]
 	}
 	if name == "" {
-		fmt.Fprintln(os.Stderr, "usage: foundry new <name> --template <go|flutter>")
+		fmt.Fprintln(os.Stderr, "usage: foundry new <name> --template <go|flutter|vanilla-js|react>")
 		return 2
 	}
 	if *tmpl == "" {
-		fmt.Fprintln(os.Stderr, "--template is required (go or flutter)")
+		fmt.Fprintln(os.Stderr, "--template is required (go, flutter, vanilla-js, or react)")
 		return 2
 	}
 
@@ -137,6 +146,9 @@ func (a App) newCmd(args []string) int {
 		return 1
 	}
 	fmt.Println("Template source: bundled files")
+	if selected.Kind == "javascript" || selected.Kind == "react" {
+		fmt.Println("Next: run npm ci, then npm run dev in the generated project.")
+	}
 	return 0
 }
 
@@ -269,6 +281,7 @@ Usage:
   foundry
   foundry new <name> --template go [--module path] [--version version]
   foundry new <name> --template flutter [--org com.example] [--version version]
+  foundry new <name> --template <vanilla-js|react> [--version version]
   foundry add service <name> [--project path]
   foundry add repository <name> [--project path]
   foundry add usecase <domain> <name> [--project path]
