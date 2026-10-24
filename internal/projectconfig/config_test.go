@@ -7,7 +7,7 @@ import (
 
 func TestRoundTrip(t *testing.T) {
 	root := t.TempDir()
-	want := Config{ProjectName: "demo", Template: "go-grpc-clean", TemplateVersion: "1.2.0", Kind: "go", Module: "example.com/demo"}
+	want := Config{ProjectName: "demo", Template: "go-foundations", TemplateVersion: "1.2.0", Kind: "go", Module: "example.com/demo"}
 	if err := Write(root, want); err != nil {
 		t.Fatal(err)
 	}

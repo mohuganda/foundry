@@ -39,7 +39,7 @@ func TestBundledTemplatesGenerate(t *testing.T) {
 }
 
 func TestGenerateGoModule(t *testing.T) {
-	for _, placeholder := range []string{"go-foundations", "example.com/go-foundations", "example.com/grpc-clean-starter"} {
+	for _, placeholder := range []string{"go-foundations", "example.com/go-foundations"} {
 		for _, module := range []string{"", "example.org/acme/service", "example.org/acme/go-foundations"} {
 			t.Run(placeholder+"/"+module, func(t *testing.T) {
 				dest := t.TempDir()
