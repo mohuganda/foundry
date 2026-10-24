@@ -177,7 +177,12 @@ func (a App) newCmd(args []string) int {
 
 func addCmd(args []string) int {
 	if (len(args) == 1 && (args[0] == "--help" || args[0] == "-h")) || (len(args) == 2 && (args[1] == "--help" || args[1] == "-h")) {
-		fmt.Println("Usage: foundry add <service|repository|proto|migration|feature|package> <name> [--project path]\n       foundry add usecase <domain> [name] [--project path]")
+		fmt.Println(`Go project generators:
+  foundry add <service|repository|proto|migration> <name> [--project path]
+  foundry add usecase <domain> [name] [--project path]
+Flutter workspace generators:
+  foundry add <feature|package> <name> [--project path]
+Run from the generated root, or select it with --project. No add generators for JavaScript, React, or Rust.`)
 		return 0
 	}
 	if len(args) < 2 {
@@ -338,24 +343,43 @@ func masonCmd(args []string) int {
 func usage() {
 	fmt.Println(`Foundry — reusable project foundations
 
-Usage:
-  foundry
-  foundry new <name> --template go [--module path] [--version version]
-  foundry new <name> --template flutter [--org com.example] [--version version]
-  foundry new <name> --template <vanilla-js|react> [--version version]
-  foundry new <name> --template rust [--version version]
+Discover (any directory):
+  foundry help                              Show this guide
+  foundry list                              List bundled templates
+  foundry template list                     Alias for list
+  foundry info <template>                    Show template details and aliases
+  foundry doctor                            Report tools available on PATH
+  foundry version                            Show executable version
+
+Create (run from the parent directory):
+  foundry                                   Choose a name and template interactively
+  foundry new <name> --template go [--module path]
+  foundry new <name> --template flutter [--org com.example]
+  foundry new <name> --template <vanilla-js|react|rust>
+  Options: --destination path, --version version, --no-hooks, --force
+  Run foundry new --help for all creation flags.
+
+Extend Go (generated project root, or --project path):
   foundry add service <name> [--project path]
   foundry add repository <name> [--project path]
-  foundry add usecase <domain> <name> [--project path]
+  foundry add usecase <domain> [name] [--project path]
   foundry add proto <name> [--project path]
   foundry add migration <name> [--project path]
+
+Extend Flutter (generated workspace root):
   foundry add feature <name> [--project path]
   foundry add package <name> [--project path]
-  foundry template list
-  foundry upgrade [--project path] [--check]
-  foundry mason <brick> [args...]
-  foundry list
-  foundry info <template>
-  foundry doctor
-  foundry version`)
+  foundry mason <brick> [args...]             Run mason make from PATH in this directory
+  For multi-app workspaces, select the app with Mason's --app argument.
+  JavaScript, React, and Rust have no foundry add generators yet.
+
+Maintain (any generated project root, or --project path):
+  foundry upgrade [--project path] [--check]  Compare template versions; no files changed
+
+Develop generated projects with their native tools:
+  Go: make help                             Flutter: fvm dart run melos run
+  JavaScript / React: npm run                Rust: bash scripts/check.sh
+  Rust on Windows: ./scripts/check.ps1
+
+Guide: docs/workspaces.md; full reference: docs/commands.md (Foundry repository).`)
 }

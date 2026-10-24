@@ -54,6 +54,20 @@ go build -trimpath -o foundry.exe ./cmd/foundry
 .\foundry.exe version
 ```
 
+## Command categories and workspaces
+
+| Category | Commands | Where to run |
+| --- | --- | --- |
+| Discover | `help`, `list`, `template list`, `info`, `doctor`, `version` | Any directory |
+| Create | `foundry`, `new` | Parent folder of the new project; or specify `--destination` |
+| Extend Go | `add service`, `repository`, `usecase`, `proto`, `migration` | Generated Go root, or select it with `--project` |
+| Extend Flutter | `add feature`, `add package`, `mason` | Generated Flutter workspace root; `add` accepts `--project` |
+| Maintain | `upgrade --check` | Any generated root, or select it with `--project` |
+| Develop and validate | Make, Melos, npm, Cargo | The relevant generated workspace root |
+| Contribute and release Foundry | Root `make` targets and release scripts | Foundry's own repository |
+
+Start with the [workspace guide](docs/workspaces.md) for the support matrix and end-to-end examples for Go, Flutter, Vanilla JS, React, and Rust. Use the [command reference](docs/commands.md) for flags, scripts, prerequisites, outputs, and side effects. `foundry help` shows the same CLI categories.
+
 ## Create projects
 
 Interactive:

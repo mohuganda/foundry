@@ -2,6 +2,12 @@
 
 A Rust 2024 application foundation with a thin executable, reusable library, feature modules, typed errors, and no third-party dependencies.
 
+## Foundry command scope
+
+This is a generated application root. Use Cargo and the check scripts here for development, tests, and builds. Add features under `src/features/` using the structure below; Foundry has no `add` generators for this template. Go and Flutter scaffolding commands belong to their respective workspaces.
+
+`foundry upgrade --check` compares the version in `.foundry.yaml` with the installed executable's bundled template; it changes no files. From another directory, use `foundry upgrade --project <root> --check`. Foundry does not run, build, or deploy this application.
+
 ## Run
 
 Install Rust with rustup from https://rust-lang.org/tools/install/. The included toolchain file selects stable Rust with rustfmt and Clippy. The minimum supported compiler is Rust 1.85; CI checks both that version and stable.

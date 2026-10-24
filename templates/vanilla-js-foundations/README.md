@@ -2,6 +2,12 @@
 
 Vanilla JavaScript Foundations: a client-side JavaScript application built with Vite, native ES modules, and a feature-first structure.
 
+## Foundry command scope
+
+This is a generated application root. Use npm scripts here for development, tests, and builds. Add features under `src/features/` using the structure below; Foundry has no `add` generators for this template. Go and Flutter scaffolding commands belong to their respective workspaces.
+
+`foundry upgrade --check` compares the version in `.foundry.yaml` with the installed executable's bundled template; it changes no files. From another directory, use `foundry upgrade --project <root> --check`. Foundry does not run, build, or deploy this application.
+
 ## Start
 
 Use Node.js 22.18+ on the 22.x line, Node 24, or a newer supported even-numbered release. `.nvmrc` selects Node 22.

@@ -2,6 +2,12 @@
 
 A production-oriented Go foundation using gRPC, Protocol Buffers, Clean Architecture, PostgreSQL, local RBAC, audit trails, local JWT authentication, optional OIDC/Keycloak authentication, Prometheus, OpenTelemetry, Jaeger, Docker Compose, migrations, pagination, health checks, graceful shutdown, structured logging, and tests.
 
+## Foundry command scope
+
+Run `foundry add service <name>`, `add repository <name>`, `add usecase <domain> [name]`, `add proto <name>`, or `add migration <name>` from this generated Go root. From another directory, append `--project <root>`. Implement and wire the generated scaffolds, then use `make format` and `make ci` to regenerate contracts and validate the application. Flutter's feature/package generators belong to Flutter workspaces.
+
+`foundry upgrade --check` compares this project's recorded template version without changing files. Use `make help` for application development targets; Foundry's own repository has separate Make targets with a different scope.
+
 ## Architecture
 
 ```text
