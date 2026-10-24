@@ -1,0 +1,13 @@
+name: offline_feature
+description: Generate an offline-aware sync job boundary.
+version: 0.1.0
+vars:
+  app:
+    type: string
+    description: target app
+  feature:
+    type: string
+    description: feature name
+  name:
+    type: string
+    description: sync job name

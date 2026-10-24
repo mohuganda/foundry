@@ -1,0 +1,62 @@
+name: flutter_foundation_workspace
+publish_to: none
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+workspace:
+  # Register generated applications here (for example, apps/my_app).
+  - packages/*
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  melos: ^7.0.0
+
+melos:
+  scripts:
+    bootstrap:
+      description: Resolve all workspace dependencies.
+      run: fvm dart pub get
+    analyze:
+      description: Analyze all workspace packages.
+      run: fvm dart run melos exec --fail-fast -- fvm dart analyze .
+    format:
+      description: Format Dart source code.
+      run: fvm dart format apps packages
+    format:check:
+      description: Verify formatting without changing files.
+      run: fvm dart format --output=none --set-exit-if-changed apps packages
+    test:
+      description: Run tests in packages containing test/.
+      run: fvm dart run melos exec --flutter --dir-exists=test --fail-fast -- fvm flutter test && fvm dart run melos exec --no-flutter --dir-exists=test --fail-fast -- fvm dart test
+    test:coverage:
+      description: Run Flutter tests with coverage.
+      run: fvm dart run melos exec --flutter --dir-exists=test -- fvm flutter test --coverage
+    codegen:
+      description: Run build_runner where configured.
+      run: fvm dart run melos exec --depends-on=build_runner -- fvm dart run build_runner build
+    codegen:watch:
+      description: Watch code generation where configured.
+      run: fvm dart run melos exec --depends-on=build_runner --concurrency=1 -- fvm dart run build_runner watch
+    clean:
+      description: Clean Flutter packages.
+      run: fvm dart run melos exec --flutter -- fvm flutter clean
+    pub:get:
+      description: Resolve package dependencies.
+      run: fvm dart pub get
+    outdated:
+      description: Show outdated dependencies.
+      run: fvm dart run melos exec -- fvm dart pub outdated
+    quality:
+      description: Run formatting, analysis, and tests.
+      run: fvm dart run melos run format:check && fvm dart run melos run analyze && fvm dart run melos run test
+    ci:
+      description: CI quality gate including generated code.
+      run: fvm dart run melos run codegen && fvm dart run melos run quality
+
+    bricks:list:
+      description: List available Mason bricks.
+      run: mason list
+    bricks:validate:
+      description: Render, generate, analyze, and test every Mason brick.
+      run: bash scripts/validate_bricks.sh

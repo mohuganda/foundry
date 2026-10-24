@@ -1,0 +1,11 @@
+name: flutter_package
+description: Generate a shared Flutter workspace package.
+version: 0.1.0
+vars:
+  name:
+    type: string
+    prompt: Package name?
+  description:
+    type: string
+    default: Shared Flutter package
+    prompt: Package description?

@@ -1,0 +1,16 @@
+name: foundation_observability
+publish_to: none
+resolution: workspace
+version: 0.3.0
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  # 5.1.17+ requires share_plus 13/win32 6, which conflicts with file_picker 10.
+  # Keep this exact until the workspace migrates to file_picker 12.
+  talker_flutter: 5.1.16
+  sentry_flutter: ^9.6.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

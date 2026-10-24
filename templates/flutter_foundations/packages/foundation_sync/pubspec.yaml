@@ -1,0 +1,11 @@
+name: foundation_sync
+publish_to: none
+resolution: workspace
+version: 0.3.0
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+dependencies:
+  foundation_connectivity:
+    path: ../foundation_connectivity
+  foundation_observability:
+    path: ../foundation_observability

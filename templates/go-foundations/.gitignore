@@ -1,0 +1,7 @@
+.env
+bin/
+gen/openapiv2/
+secrets/*.pem
+.DS_Store
+coverage.out
+.vscode/*

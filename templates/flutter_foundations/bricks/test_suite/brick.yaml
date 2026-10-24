@@ -1,0 +1,6 @@
+name: test_suite
+description: Generate unit and widget test placeholders for a feature.
+version: 0.1.0
+vars:
+  app: {type: string, prompt: App package name}
+  feature: {type: string, prompt: Feature name}

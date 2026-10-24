@@ -1,0 +1,7 @@
+name: riverpod_controller
+description: Generate a Riverpod async controller.
+version: 0.1.0
+vars:
+  app: {type: string, prompt: App package name}
+  feature: {type: string, prompt: Feature name}
+  name: {type: string, prompt: Controller name}

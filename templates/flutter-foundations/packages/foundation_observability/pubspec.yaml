@@ -1,5 +1,0 @@
-name: foundation_observability
-publish_to: none
-version: 1.0.0
-environment:
-  sdk: ">=3.6.0 <4.0.0"

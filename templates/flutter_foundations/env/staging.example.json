@@ -1,0 +1,1 @@
+{"APP_ENV":"staging","API_BASE_URL":"https://staging-api.example.org","AUTH_BASE_URL":"https://staging-auth.example.org","ENABLE_HTTP_LOGS":true}
