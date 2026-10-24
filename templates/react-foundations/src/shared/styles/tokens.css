@@ -1,0 +1,12 @@
+/* Shared design tokens. Feature-specific styles stay with their feature. */
+:root {
+  color-scheme: light;
+  --color-background: #f4f5f1;
+  --color-surface: #ffffff;
+  --color-text: #182723;
+  --color-muted: #52645c;
+  --color-accent: #1c624a;
+  --color-accent-hover: #124633;
+  --color-focus: #b45700;
+  --color-border: #d4ddd6;
+}

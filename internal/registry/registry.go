@@ -27,6 +27,16 @@ var templates = []Template{
 		Description: "Flutter + Riverpod + go_router + Dio + Melos + Mason-ready reusable foundation packages",
 		Aliases:     []string{"flutter", "mobile", "app"}, EmbeddedDir: "templates/flutter_foundations", Kind: "flutter",
 	},
+	{
+		ID: "vanilla-js-foundations", Name: "Vanilla JavaScript Foundations", Version: "1.0.0",
+		Description: "JavaScript + Vite + feature-first modules + ESLint + Prettier + Vitest + accessible DOM components",
+		Aliases:     []string{"vanilla", "vanilla-js", "javascript", "js"}, EmbeddedDir: "templates/vanilla-js-foundations", Kind: "javascript",
+	},
+	{
+		ID: "react-foundations", Name: "React Foundations", Version: "1.0.0",
+		Description: "React + JavaScript + Vite + feature-first components + Hooks linting + Testing Library + Vitest",
+		Aliases:     []string{"react"}, EmbeddedDir: "templates/react-foundations", Kind: "react",
+	},
 }
 
 func All() []Template {

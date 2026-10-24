@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jabahum/foundry/internal/projectconfig"
+	"github.com/jabahum/foundry/internal/config"
 	"github.com/jabahum/foundry/internal/registry"
 )
 
@@ -64,7 +64,7 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 			fmt.Fprintf(os.Stderr, "warning: post-generation hook: %v\n", err)
 		}
 	}
-	if err := projectconfig.Write(dest, projectconfig.Config{ProjectName: sanitize(o.Name), Template: t.ID, TemplateVersion: t.Version, Kind: t.Kind, Module: o.Module, Org: o.Org, Package: o.Package}); err != nil {
+	if err := config.Write(dest, config.Config{ProjectName: sanitize(o.Name), Template: t.ID, TemplateVersion: t.Version, Kind: t.Kind, Module: o.Module, Org: o.Org, Package: o.Package}); err != nil {
 		return fmt.Errorf("write .foundry.yaml: %w", err)
 	}
 	fmt.Printf("\nCreated %s using %s v%s\n", dest, t.Name, t.Version)
@@ -107,7 +107,7 @@ func copyTree(src fs.FS, root, dst string) error {
 }
 
 func replaceText(root string, vars map[string]string) error {
-	exts := map[string]bool{".go": true, ".mod": true, ".sum": true, ".proto": true, ".yaml": true, ".yml": true, ".json": true, ".md": true, ".sql": true, ".env": true, ".example": true, ".dart": true, ".xml": true, ".gradle": true, ".properties": true, ".toml": true, ".makefile": true, ".tmpl": true}
+	exts := map[string]bool{".html": true, ".js": true, ".jsx": true, ".mjs": true, ".css": true, ".go": true, ".mod": true, ".sum": true, ".proto": true, ".yaml": true, ".yml": true, ".json": true, ".md": true, ".sql": true, ".env": true, ".example": true, ".dart": true, ".xml": true, ".gradle": true, ".properties": true, ".toml": true, ".makefile": true, ".tmpl": true}
 	ordered := [][2]string{
 		{"example.com/go-foundations", vars["example.com/go-foundations"]},
 		{"go-foundations", vars["go-foundations"]},

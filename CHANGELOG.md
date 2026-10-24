@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Complete the project metadata package rename from `internal/projectconfig` to `internal/config`.
+
+- Add embedded Vanilla JavaScript and React foundations with Vite, feature-first structure, reproducible npm installs, linting, formatting, behavior tests, and production builds.
+- Expose both web templates in the CLI menu, aliases, generation metadata, and cross-version Node CI.
+
 - Deliver all templates as embedded source files and restore `.tmpl` filenames during generation.
 - Remove template ZIP packaging, downloads, external registries, and cache commands.
 - Resolve template version checks and upgrade reports from the bundled registry only.
