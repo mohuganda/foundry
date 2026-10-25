@@ -176,7 +176,7 @@ jobs:
         with:
           go-version: '1.23.x'
           cache: true
-      - run: go run ./cmd/foundry new auth-check --template go --destination "$RUNNER_TEMP/foundry-keycloak" --no-hooks
+      - run: go run ./cmd/foundry new auth-check --template go --profile moh-uganda --destination "$RUNNER_TEMP/foundry-keycloak" --no-hooks
       - run: bash auth/dev/start.sh
         working-directory: ${{ runner.temp }}/foundry-keycloak
       - run: go test ./internal/infrastructure/auth/oidc -run TestKeycloakIntegration -v

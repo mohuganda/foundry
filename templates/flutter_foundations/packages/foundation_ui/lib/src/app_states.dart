@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AppLoadingState extends StatelessWidget {
   const AppLoadingState({super.key, this.label = 'Loading…'});
@@ -50,7 +51,10 @@ class AppErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+          Icon(
+            LucideIcons.circleAlert,
+            color: Theme.of(context).colorScheme.error,
+          ),
           const SizedBox(height: 12),
           Text(message, textAlign: TextAlign.center),
           if (onRetry != null) ...[
@@ -75,7 +79,7 @@ class AppOfflineBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_outlined),
+            const Icon(LucideIcons.cloudOff),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

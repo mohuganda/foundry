@@ -2,9 +2,9 @@
 
 All five foundations include a non-secret identity source at identity/identity.json.
 The default profile is generic. Use moh-uganda for Ministry of Health / Republic of
-Uganda names, the MoH short name, and https://health.go.ug. No approved visual assets
-or official colour/font specifications are bundled. Neutral visual defaults remain
-marked pending; supply approved material and record its review evidence yourself.
+Uganda names, the MoH short name, https://health.go.ug and the bundled Uganda coat
+of arms. Colours remain neutral and approval remains pending. Supply approved
+material and record its review evidence when available.
 
 ```sh
 foundry identity example --profile moh-uganda --name "Programme Portal" > moh.json
@@ -213,3 +213,34 @@ only the intended application output. No arbitrary ownership data should be sent
 to browser clients, logs, reports, or public endpoints.
 
 See the [shared login design guide](login-design.md) for consistent client layouts and the matching Keycloak theme.
+
+## Sans-serif typography, Lucide icons and the Ministry emblem
+
+Both profiles use `Arial, Helvetica, sans-serif` for text. Web and Keycloak controls
+inherit it; Flutter uses the first configured family with sans-serif fallbacks.
+No remote font service is needed. A custom registered font remains configurable
+through `branding.tokens.font_family`.
+
+Client UI uses Lucide: named imports from `lucide-react` for React, `lucide` for
+DOM helpers (also shipped with React), and `LucideIcons` exported by
+`foundation_ui` for Flutter. Use 20–24px icons with visible text; decorative SVGs
+are hidden from assistive technology. Icon-only controls need an accessible label.
+Keycloak uses locally bundled Lucide SVG masks and theme-property hooks, including
+the password visibility toggle, alerts, MFA, recovery, copy and disclosure controls.
+Provider/social brand marks and third-party tools such as Swagger retain their own
+branding. Do not use the coat of arms as a replacement for an interface icon.
+
+`moh-uganda` defaults `branding.assets.coat_of_arms` to
+`builtin:uganda-coat-of-arms`. Generation resolves this to a local PNG and copies it
+to each client's assets and the Keycloak theme. The generic profile stays unbranded.
+The image comes unmodified from the [official embassy's national symbols page](https://washington.mofa.go.ug/index.php/node/259);
+`identity/ASSET-SOURCES.md` records provenance. It is the same full-colour image in
+light and dark mode. Existing `logo_light`/`logo_dark` slots remain available for a
+separate programme logo. It does not replace the native launcher icon or favicon.
+
+Existing apps can use the built-in reference in `identity/identity.json` and run
+`foundry identity sync --dry-run`, then `foundry identity sync` to copy it offline.
+Set `coat_of_arms` to `""` to remove it, or a local image path to replace it. Sync
+reads the copied local file on subsequent runs, preserving local replacements.
+Identity sync updates tokens/assets/provider theme; earlier clients must adopt the
+new components and dependency updates separately. Approval metadata is unchanged.

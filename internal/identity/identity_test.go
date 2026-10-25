@@ -14,8 +14,11 @@ func TestProfileDefaultsAndStrictOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.Organisation.Name != "Ministry of Health" || c.Branding.Approval.Status != "pending" || c.Branding.Assets.LogoLight != "" {
+	if c.Organisation.Name != "Ministry of Health" || c.Branding.Approval.Status != "pending" || c.Branding.Assets.CoatOfArms != "builtin:uganda-coat-of-arms" {
 		t.Fatal("invented or missing profile defaults")
+	}
+	if c.Branding.Tokens.FontFamily != "Arial, Helvetica, sans-serif" {
+		t.Fatal("profile typography is not sans-serif")
 	}
 	root := t.TempDir()
 	file := filepath.Join(root, "identity.json")
@@ -75,7 +78,7 @@ func TestAssetsAreCopiedAndActiveSVGIsRejected(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.Branding.Assets.LogoLight != "assets/logo_light.svg" || len(assets) != 1 {
+	if c.Branding.Assets.LogoLight != "assets/logo_light.svg" || len(assets) != 2 {
 		t.Fatal("asset paths not normalized")
 	}
 	files, err := Render(foundry.Templates, c, assets, "react")
@@ -141,6 +144,47 @@ func TestSharedLoginDesignAndTheme(t *testing.T) {
 			if string(fixture) != string(files[filepath.FromSlash("packages/foundation_identity/lib/src/login_design.dart")].Data) {
 				t.Fatal("Flutter login fixture differs from shared contract; regenerate it")
 			}
+		}
+	}
+}
+
+func TestBundledMinistryLogoSurvivesOfflineGenerationAndSync(t *testing.T) {
+	c, assets, err := Resolve("moh-uganda", "", "Portal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Branding.Assets.CoatOfArms != "assets/coat_of_arms.png" {
+		t.Fatal("bundled asset not normalized")
+	}
+	generic, genericAssets, err := Resolve("generic", "", "Portal")
+	if err != nil || generic.Branding.Assets.CoatOfArms != "" || len(genericAssets) != 0 {
+		t.Fatal("Ministry emblem leaked into generic profile")
+	}
+	for _, kind := range []string{"go", "react", "javascript", "flutter", "rust"} {
+		files, err := Render(foundry.Templates, c, assets, kind)
+		if err != nil {
+			t.Fatal(err)
+		}
+		root := t.TempDir()
+		for path, file := range files {
+			target := filepath.Join(root, path)
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(target, file.Data, file.Mode); err != nil {
+				t.Fatal(err)
+			}
+		}
+		again, copied, err := Resolve("", filepath.Join(root, Source), "")
+		if err != nil || again.Branding.Assets.CoatOfArms != c.Branding.Assets.CoatOfArms || len(copied) != 1 {
+			t.Fatalf("%s sync lost logo: %v", kind, err)
+		}
+		theme := "auth/keycloak-theme/foundry/login/resources/"
+		if !strings.Contains(string(files[filepath.FromSlash(theme+"css/foundry-tokens.css")].Data), "../assets/coat_of_arms.png") {
+			t.Fatal("provider logo missing")
+		}
+		if len(files[filepath.FromSlash(theme+"assets/coat_of_arms.png")].Data) == 0 || len(files[filepath.FromSlash(theme+"icons/eye.svg")].Data) == 0 {
+			t.Fatal("provider assets not bundled")
 		}
 	}
 }

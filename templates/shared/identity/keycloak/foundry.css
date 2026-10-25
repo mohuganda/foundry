@@ -169,3 +169,65 @@ a {
 .pf-v5-c-form-control:focus-within::after {
   border-bottom-color: var(--color-focus);
 }
+
+/* Explicitly cover provider headings, inputs and controls as well as body text. */
+.pf-v5-c-login :is(h1, h2, h3, p, label, input, button, select, textarea) {
+  font-family: var(--font-family);
+}
+/* Passive, locally bundled Lucide SVGs replace the inherited icon font. */
+.foundry-icon {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  vertical-align: -0.2em;
+  background-color: currentColor;
+  mask: var(--foundry-icon) no-repeat center / contain;
+}
+.foundry-icon::before {
+  content: none;
+}
+.foundry-icon-eye {
+  --foundry-icon: url('../icons/eye.svg');
+}
+.foundry-icon-eye-off {
+  --foundry-icon: url('../icons/eye-off.svg');
+}
+.foundry-icon-circle-alert {
+  --foundry-icon: url('../icons/circle-alert.svg');
+}
+.foundry-icon-triangle-alert {
+  --foundry-icon: url('../icons/triangle-alert.svg');
+}
+.foundry-icon-circle-check {
+  --foundry-icon: url('../icons/circle-check.svg');
+}
+.foundry-icon-info {
+  --foundry-icon: url('../icons/info.svg');
+}
+.foundry-icon-rotate-ccw {
+  --foundry-icon: url('../icons/rotate-ccw.svg');
+}
+.foundry-icon-chevron-right {
+  --foundry-icon: url('../icons/chevron-right.svg');
+}
+.foundry-icon-chevron-down {
+  --foundry-icon: url('../icons/chevron-down.svg');
+}
+.foundry-icon-list {
+  --foundry-icon: url('../icons/list.svg');
+}
+.foundry-icon-lock-keyhole {
+  --foundry-icon: url('../icons/lock-keyhole.svg');
+}
+.foundry-icon-smartphone {
+  --foundry-icon: url('../icons/smartphone.svg');
+}
+.foundry-icon-key-round {
+  --foundry-icon: url('../icons/key-round.svg');
+}
+.foundry-icon-copy {
+  --foundry-icon: url('../icons/copy.svg');
+}
+.foundry-icon-check {
+  --foundry-icon: url('../icons/check.svg');
+}

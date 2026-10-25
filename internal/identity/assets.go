@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/jabahum/foundry"
 )
 
 func assetSlots(a *Assets) map[string]*string {
@@ -17,6 +19,18 @@ func readAssets(c *Config, base string) (map[string][]byte, error) {
 	files := map[string][]byte{}
 	for slot, value := range assetSlots(&c.Branding.Assets) {
 		if *value == "" {
+			continue
+		}
+		// A bundled reference works in examples and offline generation. On sync,
+		// normalized local paths are read normally so user replacements survive.
+		if *value == "builtin:uganda-coat-of-arms" {
+			data, err := foundry.Templates.ReadFile("templates/shared/identity/assets/uganda-coat-of-arms.png")
+			if err != nil {
+				return nil, err
+			}
+			target := "assets/" + slot + ".png"
+			files["identity/"+target] = data
+			*value = target
 			continue
 		}
 		rel := filepath.FromSlash(*value)

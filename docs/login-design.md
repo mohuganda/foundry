@@ -17,8 +17,9 @@ large text wraps, and web clients provide keyboard focus and a skip link. The lo
 shell hides application navigation until the application is authenticated.
 
 Colours, fonts, borders, corner radius and optional assets use the existing identity
-profile, including light/dark tokens. No approved Ministry logos or fonts have been
-supplied: neutral defaults remain pending approval. Keep a common reviewed Ministry
+profile, including light/dark tokens. The MoH profile includes the sourced Uganda coat of arms; colours remain neutral
+and branding approval remains pending. Text uses a sans-serif stack and client
+interface glyphs use Lucide. Keep a common reviewed Ministry
 identity source for each generated application to preserve branding across products.
 Platform text rendering follows native font metrics; approved custom fonts must be
 registered in each platform before expecting identical typography.
@@ -98,10 +99,11 @@ sizes in light/dark, pending and error states.
 
 ## Reference previews
 
-These screenshots show neutral defaults and example programme details. React and
+These screenshots show the MoH coat of arms, sans-serif typography, Lucide icons,
+neutral colours and example programme details. React and
 Vanilla JS render the same card metrics and colours in these scenarios.
 
-![Shared desktop login with neutral Ministry defaults](images/login-desktop.png)
+![Shared desktop login with Ministry emblem and sans-serif typography](images/login-desktop.png)
 
 ![Shared mobile login in dark mode](images/login-mobile-dark.png)
 

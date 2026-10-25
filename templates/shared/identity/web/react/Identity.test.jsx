@@ -14,6 +14,7 @@ it('supports missing or broken logos while retaining organisation identity', () 
   const profile = structuredClone(identity);
   profile.organisation.name = 'Ministry of Health';
   profile.branding.assets.logo_light = '/branding/assets/logo_light.svg';
+  profile.branding.assets.coat_of_arms = '';
   profile.application.environment = 'production';
   const { container } = render(
     <IdentityShell profile={profile}>

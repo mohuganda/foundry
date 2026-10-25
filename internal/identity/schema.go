@@ -117,10 +117,11 @@ func Default(profile, name string) (Config, error) {
 	c.Branding.Tokens = Tokens{
 		Light:      Palette{"#f4f5f1", "#ffffff", "#182723", "#52645c", "#1c624a", "#ffffff", "#9c4700", "#9aa89f", "#12683b", "#a31515"},
 		Dark:       Palette{"#111a17", "#192620", "#f2f7f4", "#b7c9bf", "#a4e0bb", "#10251a", "#ffd18a", "#74877b", "#a4e0bb", "#ffb4b4"},
-		FontFamily: "system-ui, sans-serif", FontSize: 16, SpaceSmall: 8, SpaceMedium: 16, SpaceLarge: 24, Radius: 8, BorderWidth: 1,
+		FontFamily: "Arial, Helvetica, sans-serif", FontSize: 16, SpaceSmall: 8, SpaceMedium: 16, SpaceLarge: 24, Radius: 8, BorderWidth: 1,
 	}
 	if profile == "moh-uganda" {
 		c.Organisation = Organisation{"Ministry of Health", "Republic of Uganda", "MoH", "https://health.go.ug"}
+		c.Branding.Assets.CoatOfArms = "builtin:uganda-coat-of-arms"
 	}
 	return c, nil
 }

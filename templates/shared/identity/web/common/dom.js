@@ -1,4 +1,12 @@
+import {
+  createElement,
+  CircleAlert,
+  LoaderCircle,
+  LogIn,
+  RotateCcw,
+} from 'lucide';
 import login from './login.json';
+
 import {
   assetURL,
   identity,
@@ -6,6 +14,16 @@ import {
   reportMetadata,
   safeHref,
 } from './index.js';
+
+function icon(node) {
+  return createElement(node, {
+    class: 'identity-icon',
+    'aria-hidden': 'true',
+    focusable: 'false',
+    width: 20,
+    height: 20,
+  });
+}
 
 function text(tag, value, className = '') {
   const node = document.createElement(tag);
@@ -129,7 +147,10 @@ export function createIdentityState(
     'sign-in': 'Sign in',
   }[kind];
   if (!heading) throw new Error('Unsupported identity state.');
-  element.append(text('h1', heading));
+  element.append(
+    icon(kind === 'error' ? CircleAlert : LoaderCircle),
+    text('h1', heading),
+  );
   const status = text(
     'p',
     message || (kind === 'sign-in' ? profile.application.name : heading),
@@ -143,6 +164,7 @@ export function createIdentityState(
       kind === 'sign-in' ? 'Continue' : 'Try again',
       'button',
     );
+    button.prepend(icon(RotateCcw));
     button.type = 'button';
     button.disabled = !onAction;
     if (onAction)
@@ -229,6 +251,7 @@ export function createIdentitySignIn(
   content.append(title, text('p', description || login.description, 'muted'));
   if (error) {
     const alert = text('p', error, 'identity-login-error');
+    alert.prepend(icon(CircleAlert));
     alert.setAttribute('role', 'alert');
     content.append(alert);
   }
@@ -237,6 +260,7 @@ export function createIdentitySignIn(
     pending ? login.pending_action : login.action,
     'button identity-login-action',
   );
+  button.prepend(icon(pending ? LoaderCircle : LogIn));
   button.type = 'button';
   button.disabled = pending || !onSignIn;
   const controller = new AbortController();

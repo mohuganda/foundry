@@ -34,6 +34,13 @@ func Render(source fs.FS, c Config, assets map[string][]byte, kind string) (map[
 	if err = json.Unmarshal(design, &login); err != nil {
 		return nil, err
 	}
+	attribution, err := fs.ReadFile(source, "templates/shared/identity/assets/README.md")
+	if err != nil {
+		return nil, err
+	}
+	if c.Profile == "moh-uganda" {
+		put("identity/ASSET-SOURCES.md", attribution)
+	}
 	put(Source, JSON(c))
 	put("identity/public.json", JSON(c.Public()))
 	for path, data := range assets {
@@ -47,10 +54,24 @@ func Render(source fs.FS, c Config, assets map[string][]byte, kind string) (map[
 		}
 		put(themeRoot+file.target, data)
 	}
+	iconFiles, err := fs.ReadDir(source, "templates/shared/identity/keycloak/icons")
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range iconFiles {
+		data, err := fs.ReadFile(source, "templates/shared/identity/keycloak/icons/"+file.Name())
+		if err != nil {
+			return nil, err
+		}
+		put(themeRoot+"resources/icons/"+file.Name(), data)
+	}
 	tokens := css(c.Branding.Tokens) + fmt.Sprintf("\n:root {\n  --login-max-width: %dpx;\n  --login-padding: %dpx;\n  --login-control-height: %dpx;\n  --login-title-size: %dpx;\n}\n", login.MaxWidth, login.Padding, login.ControlHeight, login.TitleSize)
 	lightLogo := c.Branding.Assets.LogoLight
 	if lightLogo == "" {
 		lightLogo = c.Branding.Assets.LogoDark
+	}
+	if lightLogo == "" {
+		lightLogo = c.Branding.Assets.CoatOfArms
 	}
 	if lightLogo != "" {
 		tokens += fmt.Sprintf("\n:root {\n  --foundry-logo: url('../%s');\n  --foundry-logo-height: 48px;\n  --foundry-logo-gap: 16px;\n}\n", lightLogo)

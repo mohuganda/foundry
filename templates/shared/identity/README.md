@@ -4,8 +4,10 @@ Edit identity/identity.json, then run foundry identity sync from the project roo
 Use --dry-run to preview generated bindings. The source is non-secret configuration.
 Do not put passwords, tokens, patient information, or private keys in this file.
 
-The moh-uganda profile supplies organisation names and the Ministry website only.
-No approved official logos, coat of arms, fonts, or colour specifications ship here.
+The moh-uganda profile supplies organisation names and the Ministry website.
+The moh-uganda profile bundles the Uganda coat of arms from the official embassy
+website; see ASSET-SOURCES.md. Text uses Arial/Helvetica/sans-serif and UI icons use
+Lucide. No custom fonts or approved colour specifications ship here.
 Neutral theme values are examples; approval remains pending until your organisation
 supplies approved assets and records the reference, approver, and date.
 
