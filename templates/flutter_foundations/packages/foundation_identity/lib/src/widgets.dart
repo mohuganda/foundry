@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:foundation_identity/src/identity.dart';
+import 'package:foundation_identity/src/login_design.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 Color _colour(Map<String, dynamic> palette, String key, Color fallback) {
@@ -56,6 +58,11 @@ ThemeData identityTheme(
       secondary: _colour(palette, 'success', Colors.green),
       surface: surface,
       onSurface: text,
+      onSurfaceVariant: _colour(
+        palette,
+        'muted',
+        dark ? const Color(0xffb7c9bf) : const Color(0xff52645c),
+      ),
       error: _colour(
         palette,
         'error',
@@ -153,20 +160,63 @@ class IdentityShell extends StatelessWidget {
     required this.identity,
     required this.child,
     this.onOpenLink,
+    this.authentication = false,
     super.key,
   });
   final AppIdentity identity;
   final Widget child;
   final ValueChanged<Uri>? onOpenLink;
+  final bool authentication;
 
   Widget _link(String label, Uri href) => TextButton(
     onPressed: onOpenLink == null ? null : () => onOpenLink!(href),
     child: Text(label),
   );
 
+  Widget _footer(double gap) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: gap),
+    child: Column(
+      children: [
+        Text(
+          '${identity.organisation} · ${identity.application}',
+          textAlign: TextAlign.center,
+        ),
+        Wrap(
+          alignment: WrapAlignment.center,
+          children: [
+            for (final link in identity.publicLinks.entries)
+              _link(link.key, link.value),
+          ],
+        ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final gap = (identity.tokens['space_medium'] as num? ?? 16).toDouble();
+    if (authentication) {
+      return Scaffold(
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox.shrink(),
+                    child,
+                    Padding(padding: EdgeInsets.all(gap), child: _footer(gap)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -219,24 +269,7 @@ class IdentityShell extends StatelessWidget {
             const Divider(height: 1),
             Expanded(child: child),
             const Divider(height: 1),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: gap),
-              child: Column(
-                children: [
-                  Text(
-                    '${identity.organisation} · ${identity.application}',
-                    textAlign: TextAlign.center,
-                  ),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (final link in identity.publicLinks.entries)
-                        _link(link.key, link.value),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            _footer(gap),
           ],
         ),
       ),
@@ -244,28 +277,192 @@ class IdentityShell extends StatelessWidget {
   }
 }
 
-/// Sign-in presentation only; connect the real application authentication action.
+final _loginCopy = List<String>.from(jsonDecode(loginCopyJson) as List);
+
+/// Shared client sign-in design; connect the real provider action.
 class IdentitySignIn extends StatelessWidget {
-  const IdentitySignIn({required this.identity, this.onSignIn, super.key});
+  const IdentitySignIn({
+    required this.identity,
+    this.onSignIn,
+    this.pending = false,
+    this.error = '',
+    super.key,
+  });
   final AppIdentity identity;
   final VoidCallback? onSignIn;
+  final bool pending;
+  final String error;
   @override
-  Widget build(BuildContext context) => Center(
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Sign in', style: Theme.of(context).textTheme.headlineSmall),
-            Text(identity.application),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onSignIn, child: const Text('Continue')),
-          ],
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final radius = (identity.tokens['radius'] as num? ?? 8).toDouble();
+    final gap = (identity.tokens['space_medium'] as num? ?? 16).toDouble();
+    final border = theme.dividerColor;
+    final contextLabel = [
+      identity.department,
+      identity.programme,
+    ].where((v) => v.isNotEmpty).join(' / ');
+    return DefaultTextStyle.merge(
+      style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: loginMaxWidth),
+            child: Container(
+              width: double.infinity,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border.all(
+                  color: border,
+                  width: (identity.tokens['border_width'] as num? ?? 1)
+                      .toDouble(),
+                ),
+                borderRadius: BorderRadius.circular(radius),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(height: 4, color: theme.colorScheme.primary),
+                  Padding(
+                    padding: const EdgeInsets.all(loginPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _BrandImages(identity),
+                        if (identity.assets.values.any(
+                          (value) => value is String && value.isNotEmpty,
+                        ))
+                          SizedBox(height: gap),
+                        if (identity.country.isNotEmpty)
+                          Text(
+                            identity.country,
+                            style: TextStyle(color: muted, fontSize: 14),
+                          ),
+                        const SizedBox(height: 8),
+                        Text(
+                          identity.organisation,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        if (identity.environment != 'production')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              '${identity.environment} environment',
+                              style: theme.textTheme.labelSmall,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Divider(height: 1, color: border),
+                  Padding(
+                    padding: const EdgeInsets.all(loginPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          _loginCopy[0].toUpperCase(),
+                          style: TextStyle(
+                            color: muted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          identity.application,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (contextLabel.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              contextLabel,
+                              style: TextStyle(color: muted),
+                            ),
+                          ),
+                        const SizedBox(height: 24),
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            _loginCopy[1],
+                            style: const TextStyle(
+                              fontSize: loginTitleSize,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(_loginCopy[2], style: TextStyle(color: muted)),
+                        if (error.isNotEmpty)
+                          Padding(
+                            padding: EdgeInsets.only(top: gap),
+                            child: Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                error,
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          ),
+                        SizedBox(height: gap),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            minHeight: loginControlHeight,
+                          ),
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(radius),
+                              ),
+                            ),
+                            onPressed: pending ? null : onSignIn,
+                            child: Text(_loginCopy[pending ? 4 : 3]),
+                          ),
+                        ),
+                        if (pending)
+                          Semantics(
+                            liveRegion: true,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(_loginCopy[4]),
+                            ),
+                          ),
+                        SizedBox(height: gap),
+                        Text(
+                          _loginCopy[5],
+                          style: TextStyle(
+                            color: muted,
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// Accessible loading presentation.
