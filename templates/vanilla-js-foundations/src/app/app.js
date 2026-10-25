@@ -12,10 +12,11 @@ export function mountApp(root) {
     const session = auth.getSession();
     const content = document.createElement('div');
     let view;
-    if (session.status === 'loading') view = createIdentityState('loading');
+    if (session.status === 'loading')
+      view = createIdentityState('sign-in', { pending: true });
     else if (session.status === 'error')
-      view = createIdentityState('error', {
-        message: session.error,
+      view = createIdentityState('sign-in', {
+        error: session.error,
         onAction: () => auth.signIn(),
       });
     else if (session.status === 'anonymous')
@@ -34,7 +35,9 @@ export function mountApp(root) {
       }
     }
     content.append(view.element);
-    const shell = createIdentityShell(content);
+    const shell = createIdentityShell(content, undefined, {
+      authentication: !['disabled', 'authenticated'].includes(session.status),
+    });
     root.replaceChildren(shell.element);
     cleanup = () => {
       view.destroy();

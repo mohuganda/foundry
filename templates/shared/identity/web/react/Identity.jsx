@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import login from './login.json';
 import {
   assetURL,
   identity,
@@ -36,34 +37,44 @@ function BrandImages({ profile }) {
   );
 }
 
-export function IdentityShell({ children, profile = identity }) {
+export function IdentityShell({
+  children,
+  profile = identity,
+  authentication = false,
+}) {
   const context = [
     profile.application.department,
     profile.application.programme,
   ].filter(Boolean);
   const navigation = profile.navigation.filter((link) => safeHref(link.href));
   return (
-    <div className="shell identity-shell">
+    <div
+      className={`shell identity-shell${authentication ? ' identity-shell--auth' : ''}`}
+    >
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <header className="identity-header">
-        <BrandImages profile={profile} />
-        <div>
-          {profile.organisation.country && (
-            <p>{profile.organisation.country}</p>
+      {!authentication && (
+        <header className="identity-header">
+          <BrandImages profile={profile} />
+          <div>
+            {profile.organisation.country && (
+              <p>{profile.organisation.country}</p>
+            )}
+            <strong>{profile.organisation.name}</strong>
+            <p>{profile.application.name}</p>
+            {context.length > 0 && (
+              <p className="muted">{context.join(' / ')}</p>
+            )}
+          </div>
+          {profile.application.environment !== 'production' && (
+            <span className="identity-environment">
+              {profile.application.environment} environment
+            </span>
           )}
-          <strong>{profile.organisation.name}</strong>
-          <p>{profile.application.name}</p>
-          {context.length > 0 && <p className="muted">{context.join(' / ')}</p>}
-        </div>
-        {profile.application.environment !== 'production' && (
-          <span className="identity-environment">
-            {profile.application.environment} environment
-          </span>
-        )}
-      </header>
-      {navigation.length > 0 && (
+        </header>
+      )}
+      {!authentication && navigation.length > 0 && (
         <nav aria-label="Main">
           {navigation.map((link) => (
             <a key={`${link.label}:${link.href}`} href={link.href}>
@@ -117,19 +128,66 @@ export function IdentityError({ message = 'Please try again.', onRetry }) {
   );
 }
 
-export function IdentitySignIn({ onSignIn, profile = identity }) {
+export function IdentitySignIn({
+  onSignIn,
+  profile = identity,
+  pending = false,
+  error = '',
+}) {
+  const context = [
+    profile.application.department,
+    profile.application.programme,
+  ]
+    .filter(Boolean)
+    .join(' / ');
   return (
-    <section className="card identity-state">
-      <h1>Sign in</h1>
-      <p>{profile.application.name}</p>
-      <button
-        type="button"
-        className="button"
-        disabled={!onSignIn}
-        onClick={onSignIn}
-      >
-        Continue
-      </button>
+    <section
+      className="identity-login"
+      aria-labelledby="sign-in-title"
+      aria-busy={pending}
+      style={{
+        '--login-max-width': `${login.max_width}px`,
+        '--login-padding': `${login.padding}px`,
+        '--login-control-height': `${login.control_height}px`,
+        '--login-title-size': `${login.title_size}px`,
+      }}
+    >
+      <div className="identity-login-brand">
+        <BrandImages profile={profile} />
+        {profile.organisation.country && <p>{profile.organisation.country}</p>}
+        <strong>{profile.organisation.name}</strong>
+        {profile.application.environment !== 'production' && (
+          <span className="identity-environment">
+            {profile.application.environment} environment
+          </span>
+        )}
+      </div>
+      <div className="identity-login-content">
+        <p className="identity-login-eyebrow">{login.eyebrow}</p>
+        <p className="identity-login-product">{profile.application.name}</p>
+        {context && <p className="muted">{context}</p>}
+        <h1 id="sign-in-title">{login.title}</h1>
+        <p className="muted">{login.description}</p>
+        {error && (
+          <p className="identity-login-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button
+          type="button"
+          className="button identity-login-action"
+          disabled={pending || !onSignIn}
+          onClick={onSignIn}
+        >
+          {pending ? login.pending_action : login.action}
+        </button>
+        {pending && (
+          <p className="identity-login-progress" role="status">
+            {login.pending_action}
+          </p>
+        )}
+        <p className="identity-login-notice muted">{login.notice}</p>
+      </div>
     </section>
   );
 }

@@ -100,3 +100,28 @@ it('updates browser metadata and omits missing image assets', () => {
     document.querySelector('link[data-foundry-identity="icon"]'),
   ).toHaveAttribute('href', '/branding/assets/favicon.svg');
 });
+
+it('shares the sign-in hierarchy and keeps pending/error actions accessible', () => {
+  const view = createIdentityState(
+    'sign-in',
+    { pending: true, error: 'Please try again' },
+    profile(),
+  );
+  const card = view.element;
+  expect(card).toHaveAttribute('aria-busy', 'true');
+  expect(
+    getByRole(card, 'heading', { name: 'Sign in', level: 1 }),
+  ).toBeTruthy();
+  expect(
+    getByRole(card, 'button', { name: 'Opening sign-in…' }),
+  ).toBeDisabled();
+  expect(getByRole(card, 'alert')).toHaveTextContent('Please try again');
+  expect(card).toHaveTextContent('Use your organisation account to continue.');
+  expect(card.style.getPropertyValue('--login-max-width')).toBe('440px');
+  const shell = createIdentityShell(card, profile(), { authentication: true });
+  expect(shell.element.querySelector('.identity-header')).toBeNull();
+  expect(queryByRole(shell.element, 'link', { name: 'Home' })).toBeNull();
+  expect(getByRole(shell.element, 'link', { name: 'Privacy' })).toBeTruthy();
+  view.destroy();
+  shell.destroy();
+});
