@@ -1,0 +1,63 @@
+package oidc
+
+import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
+	coreoidc "github.com/coreos/go-oidc/v3/oidc"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"testing"
+	"time"
+)
+
+// Run with the supplied auth/dev fixture; never point this test at a production realm.
+func TestKeycloakIntegration(t *testing.T) {
+	certFile := os.Getenv("FOUNDRY_KEYCLOAK_TEST_CA")
+	if certFile == "" {
+		t.Skip("start auth/dev/start.sh and set FOUNDRY_KEYCLOAK_TEST_CA")
+	}
+	pem, e := os.ReadFile(certFile)
+	if e != nil {
+		t.Fatal(e)
+	}
+	roots := x509.NewCertPool()
+	if !roots.AppendCertsFromPEM(pem) {
+		t.Fatal("invalid test CA")
+	}
+	client := &http.Client{Timeout: 10 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}}}
+	issuer := "https://localhost:8443/realms/foundry"
+	response, e := client.Post(issuer+"/protocol/openid-connect/token", "application/x-www-form-urlencoded", strings.NewReader(url.Values{"grant_type": {"client_credentials"}, "client_id": {"foundry-test"}, "client_secret": {"local-test-only"}}.Encode()))
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != 200 {
+		t.Fatalf("token endpoint status %d", response.StatusCode)
+	}
+	var token struct {
+		AccessToken string `json:"access_token"`
+	}
+	if e = json.NewDecoder(response.Body).Decode(&token); e != nil {
+		t.Fatal(e)
+	}
+	ctx := coreoidc.ClientContext(context.Background(), client)
+	v, e := New(ctx, issuer, "programme-api", "keycloak")
+	if e != nil {
+		t.Fatal(e)
+	}
+	id, e := v.Verify(ctx, token.AccessToken)
+	if e != nil || id.Issuer != issuer || id.UserID == "" {
+		t.Fatalf("Keycloak access token rejected: %v", e)
+	}
+	wrong, e := New(ctx, issuer, "unrelated-api", "keycloak")
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = wrong.Verify(ctx, token.AccessToken); e == nil {
+		t.Fatal("accepted wrong audience")
+	}
+}

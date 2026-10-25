@@ -1,0 +1,88 @@
+package oidc
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
+	coreoidc "github.com/coreos/go-oidc/v3/oidc"
+	"github.com/golang-jwt/jwt/v5"
+	"math/big"
+	"net/http"
+	"net/http/httptest"
+	"sync"
+	"testing"
+	"time"
+)
+
+func TestAccessTokensAndKeyRotation(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	other, _ := rsa.GenerateKey(rand.Reader, 2048)
+	var mu sync.Mutex
+	current := key
+	kid := "first"
+	issuer := ""
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			json.NewEncoder(w).Encode(map[string]any{"issuer": issuer, "authorization_endpoint": issuer + "/authorize", "token_endpoint": issuer + "/token", "jwks_uri": issuer + "/keys", "id_token_signing_alg_values_supported": []string{"RS256"}})
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		json.NewEncoder(w).Encode(map[string]any{"keys": []any{map[string]string{"kty": "RSA", "kid": kid, "use": "sig", "alg": "RS256", "n": base64.RawURLEncoding.EncodeToString(current.N.Bytes()), "e": base64.RawURLEncoding.EncodeToString(big.NewInt(int64(current.E)).Bytes())}}})
+	}))
+	defer srv.Close()
+	issuer = srv.URL
+	ctx := coreoidc.ClientContext(context.Background(), srv.Client())
+	v, e := New(ctx, issuer, "api", "keycloak")
+	if e != nil {
+		t.Fatal(e)
+	}
+	sign := func(claims jwt.MapClaims, headerType string, k *rsa.PrivateKey, id string) string {
+		tok := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+		tok.Header["kid"] = id
+		tok.Header["typ"] = headerType
+		s, e := tok.SignedString(k)
+		if e != nil {
+			t.Fatal(e)
+		}
+		return s
+	}
+	claims := func() jwt.MapClaims {
+		return jwt.MapClaims{"iss": issuer, "sub": "person", "aud": "api", "exp": time.Now().Add(time.Hour).Unix(), "typ": "Bearer"}
+	}
+	raw := sign(claims(), "JWT", key, "first")
+	id, e := v.Verify(ctx, raw)
+	if e != nil || id.Issuer != issuer || id.UserID != "person" {
+		t.Fatalf("valid token: %v", e)
+	}
+	for _, change := range []func(jwt.MapClaims){func(c jwt.MapClaims) { c["aud"] = "web" }, func(c jwt.MapClaims) { c["iss"] = "https://other.example" }, func(c jwt.MapClaims) { c["exp"] = time.Now().Add(-time.Hour).Unix() }, func(c jwt.MapClaims) { delete(c, "exp") }, func(c jwt.MapClaims) { c["typ"] = "ID" }, func(c jwt.MapClaims) { c["sub"] = "" }} {
+		c := claims()
+		change(c)
+		if _, e := v.Verify(ctx, sign(c, "JWT", key, "first")); e == nil {
+			t.Fatal("accepted invalid access token")
+		}
+	}
+	if _, e := v.Verify(ctx, sign(claims(), "JWT", other, "first")); e == nil {
+		t.Fatal("accepted bad signature")
+	}
+	mu.Lock()
+	current = other
+	kid = "rotated"
+	mu.Unlock()
+	if _, e := v.Verify(ctx, sign(claims(), "JWT", other, "rotated")); e != nil {
+		t.Fatalf("key rotation: %v", e)
+	}
+	standard, e := New(ctx, issuer, "api", "rfc9068")
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = standard.Verify(ctx, sign(claims(), "at+jwt", other, "rotated")); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = standard.Verify(ctx, sign(claims(), "JWT", other, "rotated")); e == nil {
+		t.Fatal("accepted ID-token header")
+	}
+}

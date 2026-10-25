@@ -1,0 +1,39 @@
+package auth
+
+import (
+	"context"
+	domainauth "go-foundations/internal/domain/auth"
+	"go-foundations/internal/domain/user"
+	"go-foundations/internal/infrastructure/persistence/memory"
+	"testing"
+)
+
+type externalVerifier struct{ issuer string }
+
+func (v externalVerifier) Verify(context.Context, string) (*domainauth.Identity, error) {
+	return &domainauth.Identity{Provider: "oidc", Issuer: v.issuer, UserID: "shared-subject"}, nil
+}
+func TestExternalUsersAreIssuerBoundAndMustBeEnabled(t *testing.T) {
+	ctx := context.Background()
+	users := memory.NewUserRepository()
+	u, _ := user.New("local-id", "Person", "person@example.org")
+	u.AuthProvider = "oidc"
+	u.ExternalIssuer = "https://trusted.example"
+	u.ExternalSubject = "shared-subject"
+	if err := users.Create(ctx, u); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewAuthenticationService(users, externalVerifier{"https://other.example"}).Authenticate(ctx, "token"); err == nil {
+		t.Fatal("linked a subject from another issuer")
+	}
+	id, err := NewAuthenticationService(users, externalVerifier{u.ExternalIssuer}).Authenticate(ctx, "token")
+	if err != nil || id.UserID != u.ID {
+		t.Fatalf("trusted user: %v", err)
+	}
+	disabled := memory.NewUserRepository()
+	u.Enabled = false
+	disabled.Create(ctx, u)
+	if _, err := NewAuthenticationService(disabled, externalVerifier{u.ExternalIssuer}).Authenticate(ctx, "token"); err == nil {
+		t.Fatal("accepted disabled user")
+	}
+}

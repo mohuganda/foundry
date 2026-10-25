@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"go-foundations/authconfig"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -41,8 +43,8 @@ type AuthConfig struct {
 	TokenTTL, RefreshTokenTTL                       time.Duration
 }
 type OIDCConfig struct {
-	Enabled             bool
-	IssuerURL, ClientID string
+	Enabled                           bool
+	IssuerURL, Audience, TokenProfile string
 }
 type IdempotencyConfig struct {
 	Enabled     bool
@@ -55,6 +57,7 @@ type ObservabilityConfig struct {
 }
 
 func Load() (*Config, error) {
+	defaults := authconfig.Load()
 	port, err := intEnv("GRPC_PORT", 50051)
 	if err != nil {
 		return nil, err
@@ -93,11 +96,11 @@ func Load() (*Config, error) {
 	if refreshTTL <= 0 {
 		return nil, fmt.Errorf("JWT_REFRESH_TOKEN_TTL must be positive")
 	}
-	local, err := boolEnv("AUTH_LOCAL_ENABLED", true)
+	local, err := boolEnv("AUTH_LOCAL_ENABLED", defaults.Mode != "oidc")
 	if err != nil {
 		return nil, err
 	}
-	oidcEnabled, err := boolEnv("OIDC_ENABLED", false)
+	oidcEnabled, err := boolEnv("OIDC_ENABLED", defaults.Mode == "oidc")
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +137,20 @@ func Load() (*Config, error) {
 	if local && (priv == "" || pub == "") {
 		return nil, fmt.Errorf("JWT key files are required when local auth is enabled")
 	}
-	if oidcEnabled && os.Getenv("OIDC_ISSUER_URL") == "" {
-		return nil, fmt.Errorf("OIDC_ISSUER_URL is required when OIDC is enabled")
+	oidcIssuer := strEnv("OIDC_ISSUER_URL", defaults.Issuer)
+	oidcAudience := strEnv("OIDC_AUDIENCE", defaults.Audience)
+	oidcProfile := strEnv("OIDC_TOKEN_PROFILE", defaults.TokenProfile)
+	if oidcEnabled {
+		u, e := url.Parse(oidcIssuer)
+		if e != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || oidcAudience == "" {
+			return nil, fmt.Errorf("OIDC requires an HTTPS OIDC_ISSUER_URL and OIDC_AUDIENCE")
+		}
+		if oidcProfile != "keycloak" && oidcProfile != "rfc9068" {
+			return nil, fmt.Errorf("OIDC_TOKEN_PROFILE must be keycloak or rfc9068")
+		}
+	}
+	if !local && !oidcEnabled {
+		return nil, fmt.Errorf("enable at least one backend authentication method")
 	}
 	return &Config{
 		App:           AppConfig{Name: strEnv("APP_NAME", "go-foundation"), Environment: strEnv("APP_ENV", "development"), ShutdownTimeout: shutdown},
@@ -143,7 +158,7 @@ func Load() (*Config, error) {
 		HTTP:          HTTPConfig{Host: strEnv("HTTP_HOST", "0.0.0.0"), Port: httpPort, DocsEnabled: docsEnabled},
 		Database:      DatabaseConfig{URL: db, MaxConnections: int32(maxc), MinConnections: int32(minc)},
 		Auth:          AuthConfig{LocalEnabled: local, Issuer: issuer, Audience: aud, PrivateKeyFile: priv, PublicKeyFile: pub, TokenTTL: ttl, RefreshTokenTTL: refreshTTL},
-		OIDC:          OIDCConfig{Enabled: oidcEnabled, IssuerURL: os.Getenv("OIDC_ISSUER_URL"), ClientID: os.Getenv("OIDC_CLIENT_ID")},
+		OIDC:          OIDCConfig{Enabled: oidcEnabled, IssuerURL: oidcIssuer, Audience: oidcAudience, TokenProfile: oidcProfile},
 		Idempotency:   IdempotencyConfig{Enabled: idempotencyEnabled, TTL: idempotencyTTL, LockTimeout: idempotencyLockTimeout},
 		Observability: ObservabilityConfig{OTelEnabled: otelEnabled, OTLPEndpoint: strEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4317")},
 	}, nil

@@ -33,11 +33,11 @@ func (s *AuthenticationService) Authenticate(ctx context.Context, raw string) (*
 			id.Email = u.Email
 			return id, nil
 		}
-		u, err := s.users.GetByExternalIdentity(ctx, id.Provider, id.UserID)
+		u, err := s.users.GetByExternalIdentity(ctx, id.Provider, id.Issuer, id.UserID)
 		if err != nil || !u.Enabled {
 			return nil, ErrInvalidToken
 		}
-		return &auth.Identity{UserID: u.ID, Username: u.Name, Email: u.Email, Provider: id.Provider}, nil
+		return &auth.Identity{UserID: u.ID, Username: u.Name, Email: u.Email, Provider: id.Provider, Issuer: id.Issuer}, nil
 	}
 	return nil, ErrInvalidToken
 }
