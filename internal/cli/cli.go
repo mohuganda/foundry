@@ -212,7 +212,8 @@ func addCmd(args []string) int {
   foundry add <service|repository|proto|migration> <name> [--project path]
   foundry add usecase <domain> [name] [--project path]
 Flutter workspace generators:
-  foundry add <feature|package> <name> [--project path]
+  foundry add feature <name> [--app name] [--project path] [--dry-run]
+  foundry add package <name> [--project path] [--dry-run]
 Run from the generated root, or select it with --project. No add generators for JavaScript, React, or Rust.`)
 		return 0
 	}
@@ -224,6 +225,7 @@ Run from the generated root, or select it with --project. No add generators for 
 	f := flag.NewFlagSet("add", flag.ContinueOnError)
 	f.SetOutput(os.Stderr)
 	project := f.String("project", ".", "project root")
+	app := f.String("app", "", "Flutter app directory under apps/ (feature generator only)")
 	dryRun := f.Bool("dry-run", false, "preview planned files without writing them")
 	rest := args[2:]
 	usecase := ""
@@ -242,6 +244,16 @@ Run from the generated root, or select it with --project. No add generators for 
 	}
 	if len(remaining) > 0 {
 		fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry add --help")
+		return 2
+	}
+	appFlag := false
+	f.Visit(func(flag *flag.Flag) {
+		if flag.Name == "app" {
+			appFlag = true
+		}
+	})
+	if appFlag && (kind != "feature" || *app == "") {
+		fmt.Fprintln(os.Stderr, "--app requires a non-empty app name and is only supported by add feature")
 		return 2
 	}
 	root, err := filepath.Abs(*project)
@@ -267,7 +279,7 @@ Run from the generated root, or select it with --project. No add generators for 
 	case "migration":
 		result, err = addgen.GoMigration(root, name, addgen.Options{DryRun: *dryRun})
 	case "feature":
-		result, err = addgen.FlutterFeature(root, name, addgen.Options{DryRun: *dryRun})
+		result, err = addgen.FlutterFeature(root, name, addgen.Options{DryRun: *dryRun, App: *app})
 	case "package":
 		result, err = addgen.FlutterPackage(root, name, addgen.Options{DryRun: *dryRun})
 	default:
@@ -403,10 +415,10 @@ Extend Go (generated project root, or --project path):
   foundry add migration <name> [--project path]
 
 Extend Flutter (generated workspace root):
-  foundry add feature <name> [--project path]
+  foundry add feature <name> [--app name] [--project path]
   foundry add package <name> [--project path]
   foundry mason <brick> [args...]             Run mason make from PATH in this directory
-  For multi-app workspaces, select the app with Mason's --app argument.
+  For multi-app workspaces, select the feature target with --app <name>.
   JavaScript, React, and Rust have no foundry add generators yet.
 
 Maintain (any generated project root, or --project path):

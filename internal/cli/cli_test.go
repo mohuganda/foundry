@@ -156,3 +156,33 @@ func TestCLIDryRunsDoNotWrite(t *testing.T) {
 		t.Fatal("add dry-run wrote source")
 	}
 }
+
+func TestFlutterAppCLISelection(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "pubspec.yaml"), []byte("name: workspace\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, app := range []string{"admin", "customer"} {
+		dir := filepath.Join(root, "apps", app)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "pubspec.yaml"), []byte("name: "+app+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if code := addCmd([]string{"feature", "orders", "--project", root}); code != 1 {
+		t.Fatal(code)
+	}
+	if code := addCmd([]string{"feature", "orders", "--app", "customer", "--project", root, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := addCmd([]string{"feature", "orders", "--project", root, "--app", "customer"}); code != 0 {
+		t.Fatal(code)
+	}
+	for _, kind := range []string{"package", "service", "migration"} {
+		if code := addCmd([]string{kind, "oops", "--project", root, "--app", "customer"}); code != 2 {
+			t.Fatalf("%s accepted --app: %d", kind, code)
+		}
+	}
+}

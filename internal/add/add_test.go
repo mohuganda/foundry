@@ -111,3 +111,42 @@ func TestRejectWrongWorkspaceBeforeWriting(t *testing.T) {
 		t.Fatal("wrong workspace was modified")
 	}
 }
+
+func TestFlutterFeatureExplicitAppAndAmbiguity(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "pubspec.yaml"), []byte("name: workspace\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"admin", "customer"} {
+		dir := filepath.Join(root, "apps", name)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "pubspec.yaml"), []byte("name: "+name+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := FlutterFeature(root, "orders"); err == nil || !strings.Contains(err.Error(), "--app") {
+		t.Fatalf("ambiguous workspace: %v", err)
+	}
+	for _, app := range []string{"unknown", "../admin", "/admin", `..\admin`} {
+		if _, err := FlutterFeature(root, "orders", Options{App: app}); err == nil {
+			t.Fatalf("accepted invalid app %q", app)
+		}
+	}
+	if _, err := FlutterFeature(root, "orders", Options{App: "customer", DryRun: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "apps", "customer", "lib")); !os.IsNotExist(err) {
+		t.Fatal("dry-run wrote feature")
+	}
+	if _, err := FlutterFeature(root, "orders", Options{App: "customer"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "apps", "customer", "lib", "features", "orders", "domain", "orders.dart")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "apps", "admin", "lib")); !os.IsNotExist(err) {
+		t.Fatal("unselected app changed")
+	}
+}

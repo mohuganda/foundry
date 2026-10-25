@@ -135,7 +135,7 @@ All `add` commands default to the current folder; `--project <path>` chooses ano
 | `foundry add usecase <domain> [name]` | Go application use case; omitted name defaults to `execute`; supply the domain/entity/repository and implement behavior |
 | `foundry add proto <name>` | Go protobuf service contract; run `make codegen` and implement/register the service |
 | `foundry add migration <name>` | Next numbered SQL up/down pair; edit SQL and apply it explicitly |
-| `foundry add feature <name>` | Flutter feature domain/application/data/presentation skeleton in the detected app; wire routing and add tests |
+| `foundry add feature <name> [--app <app>]` | Flutter feature domain/application/data/presentation skeleton in the detected app; wire routing and add tests |
 | `foundry add package <name>` | Flutter package skeleton under `packages/`; resolve workspace dependencies afterward |
 
 Examples:
@@ -147,7 +147,7 @@ foundry add usecase orders --project ./backend cancel
 foundry add migration add_order_status --project ./backend
 ```
 
-Flutter `add feature` selects the first app (alphabetical directory order) under apps/ with a pubspec.yaml. For explicit app selection in a multi-app workspace, use the Mason feature brick with `--app <name>`.
+Flutter `add feature` automatically selects the app only when exactly one directory under apps/ has a regular pubspec.yaml. With multiple apps, it lists candidates and requires `--app <directory-name>`. The option is valid only for `add feature`; unknown apps, empty names, and path traversal are rejected before writes. It also works with `--project` and `--dry-run`. Mason bricks retain their separate `--app` arguments.
 
 There are no `add` generators for JavaScript/React/Rust yet. Create feature modules using each template's documented structure.
 

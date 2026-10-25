@@ -13,7 +13,10 @@ import (
 	"github.com/jabahum/foundry/internal/workspace"
 )
 
-type Options struct{ DryRun bool }
+type Options struct {
+	DryRun bool
+	App    string
+}
 
 type Result struct {
 	Files []string
@@ -149,7 +152,11 @@ func FlutterFeature(root, name string, options ...Options) (Result, error) {
 	if name == "" {
 		return Result{}, fmt.Errorf("feature name is required")
 	}
-	appDir, err := flutterAppDir(root)
+	selected := ""
+	if len(options) > 0 {
+		selected = options[0].App
+	}
+	appDir, err := flutterAppDir(root, selected)
 	if err != nil {
 		return Result{}, err
 	}
@@ -249,22 +256,39 @@ func goModule(root string) (string, error) {
 	return "", fmt.Errorf("module directive not found in go.mod")
 }
 
-func flutterAppDir(root string) (string, error) {
-	apps := filepath.Join(root, "apps")
-	entries, err := os.ReadDir(apps)
+func flutterAppDir(root, selected string) (string, error) {
+	if selected != "" && (selected == "." || selected == ".." || strings.ContainsAny(selected, `/\`) || !filepath.IsLocal(selected)) {
+		return "", fmt.Errorf("--app must be a single directory name under apps/")
+	}
+	entries, err := os.ReadDir(filepath.Join(root, "apps"))
 	if err != nil {
 		return "", fmt.Errorf("apps directory not found: %w", err)
 	}
+	var apps []string
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue
 		}
-		p := filepath.Join(apps, e.Name(), "pubspec.yaml")
-		if _, err := os.Stat(p); err == nil {
-			return filepath.Join("apps", e.Name()), nil
+		st, err := os.Lstat(filepath.Join(root, "apps", e.Name(), "pubspec.yaml"))
+		if err == nil && st.Mode().IsRegular() {
+			apps = append(apps, e.Name())
 		}
 	}
-	return "", fmt.Errorf("no Flutter app found under apps/")
+	if selected != "" {
+		for _, app := range apps {
+			if app == selected {
+				return filepath.Join("apps", app), nil
+			}
+		}
+		return "", fmt.Errorf("Flutter app %q not found; available apps: %s", selected, strings.Join(apps, ", "))
+	}
+	if len(apps) == 0 {
+		return "", fmt.Errorf("no Flutter app found under apps/; generate/register an app first")
+	}
+	if len(apps) > 1 {
+		return "", fmt.Errorf("multiple Flutter apps found (%s); select one with --app <name>", strings.Join(apps, ", "))
+	}
+	return filepath.Join("apps", apps[0]), nil
 }
 
 func sanitize(s string) string {

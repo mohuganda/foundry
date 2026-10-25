@@ -173,7 +173,7 @@ Flutter:
 
 ```bash
 cd mediguide
-foundry add feature emergency_guidelines
+foundry add feature emergency_guidelines --app mediguide
 foundry add package foundation_analytics
 ```
 

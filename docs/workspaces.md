@@ -102,7 +102,7 @@ fvm dart run melos run ci
 
 Setup installs/resolves workspace tooling and dependencies. Register each new app/package as required by the root Dart workspace before resolving packages. Run Melos from the workspace root, where it can operate across apps and shared packages. `ci` runs code generation, the quality gate, and brick validation; `check` runs formatting checks, analysis, and tests without code generation or brick validation.
 
-For a workspace with one app, `foundry add feature orders` is a lightweight scaffold option; `foundry add package order_models` creates a shared package skeleton. Resolve dependencies after adding a package and implement/wire the generated code. `add feature` chooses the first app alphabetically under `apps/` with a `pubspec.yaml`. In a multi-app workspace, use the Mason feature brick with an explicit `--app` as above.
+For a workspace with one app, `foundry add feature orders` is a lightweight scaffold option; `foundry add package order_models` creates a shared package skeleton. Resolve dependencies after adding a package and implement/wire the generated code. In a multi-app workspace, use `foundry add feature orders --app customer`, or use the Mason feature brick with explicit `--app` as above. Omitting `--app` is supported only when exactly one app is present; ambiguous targets fail before writing. Preview with `foundry add feature orders --app customer --dry-run`.
 
 `foundry mason feature --app customer --name orders` is an optional shorthand when the `mason` executable on `PATH` uses the correct SDK. The explicit FVM command above guarantees the workspace SDK. These are alternative ways to invoke the brick; run it once per feature.
 
