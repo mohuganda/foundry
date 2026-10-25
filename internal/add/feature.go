@@ -22,6 +22,8 @@ func Feature(root, name string, options ...Options) (Result, error) {
 		return FlutterFeature(root, name, options...)
 	case "javascript", "react":
 		return WebFeature(root, name, options...)
+	case "rust":
+		return RustFeature(root, name, options...)
 	default:
 		return Result{}, fmt.Errorf("feature generation is not supported for %s workspaces; use its supported generators", p.Kind)
 	}

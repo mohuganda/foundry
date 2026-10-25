@@ -227,7 +227,7 @@ func writeFiles(root string, files map[string]string, kind string, options ...Op
 	if p.Kind != kind {
 		return nil, fmt.Errorf("%s generator requires a %s workspace; found %s", kind, kind, p.Kind)
 	}
-	marker := map[string]string{"go": "go.mod", "flutter": "pubspec.yaml", "javascript": "package.json", "react": "package.json"}[kind]
+	marker := map[string]string{"go": "go.mod", "flutter": "pubspec.yaml", "javascript": "package.json", "react": "package.json", "rust": "Cargo.toml"}[kind]
 	if marker == "" {
 		return nil, fmt.Errorf("unsupported scaffold workspace %q", kind)
 	}

@@ -71,7 +71,7 @@ docker run --rm --user "$(id -u):$(id -g)" \
   ghcr.io/mohuganda/foundry:1.3.0 add service orders --project my-api
 ```
 
-`--project` and `--destination` refer to container paths. A destination outside the mounted directory will not persist after the container is removed. The image supports generation, built-in Go/Flutter scaffolding, and read-only template version checks. It contains no shell, Go/Flutter/Node/Rust SDK, Mason executable, database, or Docker daemon. Use `--no-hooks` when generating; develop and validate the result using the host's native tools. `doctor` inside the image reports container tooling, rather than the host's environment.
+`--project` and `--destination` refer to container paths. A destination outside the mounted directory will not persist after the container is removed. The image supports generation, built-in Go/Flutter/web/Rust scaffolding, and read-only template version checks. It contains no shell, Go/Flutter/Node/Rust SDK, Mason executable, database, or Docker daemon. Use `--no-hooks` when generating; develop and validate the result using the host's native tools. `doctor` inside the image reports container tooling, rather than the host's environment.
 
 ### Build and check locally
 

@@ -4,7 +4,7 @@ set -eu
 case "${1:-}" in
   -h|--help)
     printf '%s\n' 'Usage: [FOUNDRY_BIN=/absolute/path/to/foundry] scripts/smoke.sh' \
-      'Generates all five templates without hooks, checks their manifests, and exercises Go add commands.' \
+      'Generates all five templates without hooks, checks manifests and exercises Go plus web/Rust feature generators.' \
       'Uses a temporary folder which is removed on success or failure. Build Foundry first with make build.'
     exit 0 ;;
 esac
@@ -37,4 +37,10 @@ set -- "$scratch/go"/migrations/*_create_smoke.up.sql
 test -f "$1"
 "$binary" add service smoke --project "$scratch/go"
 test -f "$scratch/go/api/proto/smoke/v1/smoke.proto"
+for template in vanilla-js react rust; do
+  "$binary" add feature order-history --project "$scratch/$template" --dry-run
+  test ! -e "$scratch/$template/src/features/order_history"
+  "$binary" add feature order-history --project "$scratch/$template"
+  test -f "$scratch/$template/src/features/order_history/README.md"
+done
 printf '%s\n' 'Smoke checks passed for all five templates.'

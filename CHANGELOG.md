@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add Rust feature scaffolds with domain validation, typed errors, application operations, unit tests, explicit registration instructions, and keyword-safe names.
+
 - Add workspace-dispatched Vanilla JavaScript/React feature scaffolds with colocated tests, integration notes, dry-run support, and safe name/collision checks.
 
 - Add explicit Flutter feature app selection with --app, reject ambiguous multi-app targets, and support selection in previews.

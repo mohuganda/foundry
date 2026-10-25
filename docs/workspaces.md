@@ -26,6 +26,7 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Creation | `foundry` or `foundry new <name> --template <alias>` | Parent directory; create a project folder. `--destination <path>` overrides its location |
 | Go scaffolding | `foundry add service`, `repository`, `usecase`, `proto`, `migration` | Generated Go root, or `--project <root>`; create files for you to implement and wire |
 | Flutter scaffolding | `foundry add feature`, `foundry add package` | Generated Flutter workspace root, or `--project <root>`; create feature/package files |
+| Rust scaffolding | `foundry add feature <name>` | Rust root, or `--project <root>`; create a domain/service module, tests, and registration instructions |
 | Web scaffolding | `foundry add feature <name>` | Vanilla JS/React root, or `--project <root>`; create a UI boundary and colocated tests |
 | Mason generation | `foundry mason <brick> [arguments...]` | Flutter workspace root; execute `mason make` from `PATH`, forwarding arguments. No Foundry `--project` option |
 | Maintenance | `foundry upgrade --check` | Any generated root, or `--project <root>`; compare recorded and bundled versions, without modifying files |
@@ -39,12 +40,12 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Create from bundled source | Yes | Yes | Yes | Yes | Yes |
 | Check recorded template version | Yes | Yes | Yes | Yes | Yes |
 | Add backend service/repository/use case/proto/migration | Yes | — | — | — | — |
-| Add feature | — | Yes | Yes | Yes | — |
+| Add feature | — | Yes | Yes | Yes | Yes |
 | Add shared package | — | Yes | — | — | — |
 | Generate Mason bricks | — | Yes, with Mason installed | — | — | — |
 | Run/test/build | Make / Go | FVM / Melos / Flutter | npm | npm | Cargo / check scripts |
 
-A dash means the operation has no generator for that template. Foundry validates that Go/Flutter generators target the matching workspace and native manifest before writing. Use `--dry-run` to preview paths; planned collisions fail before any files are created. Web feature scaffolds follow their generated README; Rust modules are still created manually.
+A dash means the operation has no generator for that template. Foundry validates that generators target the matching workspace and native manifest before writing. Use `--dry-run` to preview paths; planned collisions fail before any files are created. Web feature scaffolds follow their generated README; Rust feature scaffolds require explicit module registration before compilation/tests.
 
 ## Go workflow
 
@@ -151,14 +152,15 @@ npm run preview
 foundry new report-tool --template rust
 cd report-tool
 cargo run --locked -- greet World
-# Add modules under src/features/ and expose them through the library.
+foundry add feature order-history
+# Add pub mod order_history; to src/features/mod.rs, then wire its API.
 cargo fmt --all
 bash scripts/check.sh
 ```
 
 On native Windows, use `./scripts/check.ps1` for the full gate. The scripts check formatting, run Clippy, unit/integration/doc tests, generate API documentation with warnings denied, and build a release executable under `target/release/`.
 
-Use `cargo test --locked` for a focused test run. `cargo check --locked` only type-checks; it is not equivalent to the full gate. Foundry has no Rust scaffolding commands and does not install Rust or invoke Cargo during generation. Start with the included package; introduce a multi-crate Cargo workspace when your application needs it.
+Use `cargo test --locked` for a focused test run. `cargo check --locked` only type-checks; it is not equivalent to the full gate. `foundry add feature <name>` creates a domain/service module with unit tests; register the module explicitly so those tests compile and run. Foundry does not install Rust or invoke Cargo during generation. Start with the included package; introduce a multi-crate Cargo workspace when your application needs it.
 
 ## Maintenance across projects
 

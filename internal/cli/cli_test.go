@@ -208,3 +208,26 @@ func TestFeatureDispatchForWebProjects(t *testing.T) {
 		}
 	}
 }
+
+func TestFeatureDispatchForRustProject(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "project")
+	app := App{FS: foundry.Templates}
+	if code := app.Run([]string{"new", "demo", "--template", "rust", "--destination", root, "--no-hooks"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := app.Run([]string{"add", "feature", "order-history", "--project", root, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := app.Run([]string{"add", "feature", "order-history", "--project", root}); code != 0 {
+		t.Fatal(code)
+	}
+	if _, err := os.Stat(filepath.Join(root, "src", "features", "order_history", "mod.rs")); err != nil {
+		t.Fatal(err)
+	}
+	if code := app.Run([]string{"add", "feature", "self", "--project", root}); code != 1 {
+		t.Fatal("Rust keyword accepted")
+	}
+	if code := app.Run([]string{"add", "feature", "orders", "--project", root, "--app", "customer"}); code != 1 {
+		t.Fatal("Flutter option accepted for Rust")
+	}
+}

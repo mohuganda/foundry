@@ -103,6 +103,11 @@ jobs:
         run: rustup toolchain install ${{ matrix.toolchain }} --profile minimal --component rustfmt --component clippy
       - name: Generate the bundled template
         run: go run ./cmd/foundry new rust-check --template rust --destination "${{ runner.temp }}/foundry-rust" --no-hooks
+      - name: Scaffold and register a Rust feature
+        shell: bash
+        run: |
+          go run ./cmd/foundry add feature order-history --project "$RUNNER_TEMP/foundry-rust"
+          printf 'pub mod order_history;\n' >> "$RUNNER_TEMP/foundry-rust/src/features/mod.rs"
       - name: Rust quality gate (POSIX)
         if: runner.os != 'Windows'
         run: bash scripts/check.sh

@@ -214,9 +214,14 @@ func addCmd(args []string) int {
 Flutter workspace generators:
   foundry add feature <name> [--app name] [--project path] [--dry-run]
   foundry add package <name> [--project path] [--dry-run]
-Run from the generated root, or select it with --project. Web workspace generators:
+
+Web workspace generators:
   foundry add feature <name> [--project path] [--dry-run]
-Rust feature generation is not yet supported.`)
+
+Rust workspace generators:
+  foundry add feature <name> [--project path] [--dry-run]
+
+Run from the generated root, or select it with --project. Feature generation detects the workspace kind.`)
 		return 0
 	}
 	if len(args) < 2 {
@@ -421,9 +426,13 @@ Extend Flutter (generated workspace root):
   foundry add package <name> [--project path]
   foundry mason <brick> [args...]             Run mason make from PATH in this directory
   For multi-app workspaces, select the feature target with --app <name>.
-  Web features (Vanilla JavaScript / React):
+
+Extend web (Vanilla JavaScript / React):
   foundry add feature <name> [--project path] [--dry-run]
-  Feature generation detects the selected workspace. Rust is not yet supported.
+
+Extend Rust:
+  foundry add feature <name> [--project path] [--dry-run]
+  Feature generation detects the selected Flutter/web/Rust workspace.
 
 Maintain (any generated project root, or --project path):
   foundry upgrade [--project path] [--check]  Compare template versions; no files changed
