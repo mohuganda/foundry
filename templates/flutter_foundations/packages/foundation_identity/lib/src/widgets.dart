@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:foundation_identity/src/identity.dart';
 import 'package:foundation_identity/src/login_design.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 Color _colour(Map<String, dynamic> palette, String key, Color fallback) {
@@ -40,16 +41,20 @@ ThemeData identityTheme(
   final border = _colour(palette, 'border', Colors.grey);
   final radius = (tokens['radius'] as num? ?? 8).toDouble();
   final borderWidth = (tokens['border_width'] as num? ?? 1).toDouble();
-  final family = (tokens['font_family'] as String? ?? 'system-ui')
-      .split(',')
-      .first
-      .replaceAll("'", '')
-      .replaceAll('"', '')
-      .trim();
+  final families =
+      (tokens['font_family'] as String? ?? 'Arial, Helvetica, sans-serif')
+          .split(',')
+          .map((value) => value.replaceAll("'", '').replaceAll('"', '').trim())
+          .where((value) => value.isNotEmpty)
+          .toList();
+  final family = families.isEmpty ? 'Arial' : families.first;
   final base = ThemeData(
     brightness: brightness,
     useMaterial3: true,
-    fontFamily: family == 'system-ui' ? null : family,
+    fontFamily: family == 'system-ui' || family == 'sans-serif'
+        ? 'Roboto'
+        : family,
+    fontFamilyFallback: [...families.skip(1), 'Roboto', 'sans-serif'],
     colorScheme: ColorScheme.fromSeed(
       seedColor: _colour(palette, 'primary', Colors.teal),
       brightness: brightness,
@@ -421,7 +426,13 @@ class IdentitySignIn extends StatelessWidget {
                           constraints: const BoxConstraints(
                             minHeight: loginControlHeight,
                           ),
-                          child: FilledButton(
+                          child: FilledButton.icon(
+                            icon: Icon(
+                              pending
+                                  ? LucideIcons.loaderCircle
+                                  : LucideIcons.logIn,
+                              size: 20,
+                            ),
                             style: FilledButton.styleFrom(
                               textStyle: const TextStyle(
                                 fontSize: 16,
@@ -432,7 +443,7 @@ class IdentitySignIn extends StatelessWidget {
                               ),
                             ),
                             onPressed: pending ? null : onSignIn,
-                            child: Text(_loginCopy[pending ? 4 : 3]),
+                            label: Text(_loginCopy[pending ? 4 : 3]),
                           ),
                         ),
                         if (pending)

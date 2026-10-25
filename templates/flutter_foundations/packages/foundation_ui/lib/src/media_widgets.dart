@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shimmer/shimmer.dart';
 
 class AppNetworkImage extends StatelessWidget {
@@ -21,7 +22,7 @@ class AppNetworkImage extends StatelessWidget {
     width: width,
     height: height,
     placeholder: (c, u) => const ShimmerPlaceholder(),
-    errorWidget: (c, u, e) => const Icon(Icons.broken_image_outlined),
+    errorWidget: (c, u, e) => const Icon(LucideIcons.imageOff),
   );
 }
 

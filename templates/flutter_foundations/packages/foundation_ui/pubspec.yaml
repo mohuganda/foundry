@@ -5,6 +5,7 @@ version: 0.3.0
 environment:
   sdk: ">=3.9.0 <4.0.0"
 dependencies:
+  lucide_icons_flutter: 4.0.1
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.4.1
