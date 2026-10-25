@@ -39,6 +39,8 @@ func (a App) Run(args []string) int {
 		return addCmd(args[1:])
 	case "upgrade":
 		return upgradeCmd(args[1:])
+	case "auth":
+		return a.authCmd(args[1:])
 	case "identity":
 		return a.identityCmd(args[1:])
 	case "mason":
@@ -149,6 +151,8 @@ func (a App) newCmd(args []string) int {
 	}
 	f := flag.NewFlagSet("new", flag.ContinueOnError)
 	f.SetOutput(os.Stderr)
+	authMode := f.String("auth", "", "optional authentication: none or oidc")
+	authFile := f.String("auth-config", "", "non-secret authentication JSON")
 	profile := f.String("profile", "", "identity defaults: generic or moh-uganda")
 	identityFile := f.String("identity", "", "JSON identity overrides; asset paths are relative to this file")
 	tmpl := f.String("template", "", "template: go, flutter, vanilla-js, react, or rust")
@@ -193,7 +197,7 @@ func (a App) newCmd(args []string) int {
 		return 1
 	}
 	g := generator.Generator{FS: a.FS}
-	err = g.Generate(selected, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, Force: *force, NoHooks: *noHooks, DryRun: *dryRun, Profile: *profile, IdentityFile: *identityFile})
+	err = g.Generate(selected, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, Force: *force, NoHooks: *noHooks, DryRun: *dryRun, Profile: *profile, IdentityFile: *identityFile, Auth: *authMode, AuthFile: *authFile})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
@@ -416,6 +420,7 @@ Create (run from the parent directory):
   foundry new <name> --template flutter [--org com.example]
   foundry new <name> --template <vanilla-js|react|rust>
   Options: --destination path, --version version, --no-hooks, --force, --dry-run
+  Authentication: --auth <none|oidc>, --auth-config path.json
   Identity: --profile <generic|moh-uganda>, --identity path.json
   Run foundry new --help for all creation flags.
 
@@ -440,6 +445,7 @@ Extend Rust:
   Feature generation detects the selected Flutter/web/Rust workspace.
 
 Identity (generated project root, or --project path):
+  foundry auth example|validate|configure [flags]
   foundry identity example [--profile moh-uganda] [--name Portal]
   foundry identity validate --file path.json
   foundry identity sync [--project path] [--dry-run]
