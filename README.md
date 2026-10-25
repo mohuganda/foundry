@@ -317,7 +317,9 @@ Edit the generated `identity/identity.json`, preview with
 `foundry identity sync --project ./portal --dry-run`, then sync and run the native
 formatter/quality gate. See the [identity guide](docs/identity.md) for configuration, shared
 layouts, report branding, public metadata, and ownership references. Official
-logos/fonts/colours are not bundled; visual defaults are neutral and pending approval.
+fonts/colours remain neutral and pending approval. The MoH profile bundles the
+Uganda coat of arms, uses sans-serif typography and Lucide UI icons; see
+[identity customisation](docs/identity.md#sans-serif-typography-lucide-icons-and-the-ministry-emblem).
 
 ## Optional authentication
 

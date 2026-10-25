@@ -55,6 +55,29 @@ try {
     await page.locator('#username').waitFor();
     await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.locator('.foundry-organisation').count(), 1);
+    assert.match(
+      await page
+        .locator('#kc-page-title')
+        .evaluate((node) => getComputedStyle(node).fontFamily),
+      /sans-serif/,
+      'provider title does not use the shared sans-serif stack',
+    );
+    const visibility = page.locator('[data-password-toggle]');
+    await visibility.click();
+    assert.equal(await page.locator('#password').getAttribute('type'), 'text');
+    assert.equal(await visibility.locator('.foundry-icon-eye-off').count(), 1);
+    await visibility.click();
+    assert.equal(
+      await page.locator('#password').getAttribute('type'),
+      'password',
+    );
+    const icon = visibility.locator('.foundry-icon-eye');
+    const mask = await icon.evaluate(
+      (node) => getComputedStyle(node).maskImage,
+    );
+    assert.match(mask, /eye\.svg/);
+    const iconResponse = await page.request.get(mask.slice(5, -2));
+    assert.equal(iconResponse.status(), 200, 'Lucide icon was not served');
     const metrics = await page.evaluate(() => {
       const header = document
         .querySelector('#kc-header')
