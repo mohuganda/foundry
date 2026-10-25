@@ -341,3 +341,7 @@ cargo clippy --locked --offline --all-targets -- -D warnings
 - Go-foundation full local validation is `make ci` in a generated project after installing code-generation tools. Foundry Go tests check generation, not all backend integration behavior. There is no separate automated generated-backend test job in the current workflow.
 
 For template changes, generate a fresh project and run its native gate. Passing Foundry's Go tests alone does not prove a template's runtime code builds. No release script automatically merges a PR or upgrades existing generated projects.
+
+## Version reporting
+
+`foundry version` reports an injected release version when supplied by the release build. For `go install ...@<version>`, it reads the main module version from Go build metadata. Local builds without a module version report `dev`, with the VCS revision and dirty marker when available. Make's explicit `VERSION=dev` remains `dev`; no version is inferred from the bundled template versions.

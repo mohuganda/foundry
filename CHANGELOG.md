@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Report source-install versions from Go build metadata and identify local development builds without a stale hardcoded release fallback.
+
 - Add a Homebrew tap backed by this repository's Formula directory and verified macOS/Linux release archives.
 - Add a non-root Docker image with all five embedded foundations, offline generation tests, and multi-platform GHCR publishing after stable releases.
 - Automate Homebrew version/checksum updates after successful release publication and document distribution usage and maintenance.

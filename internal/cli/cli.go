@@ -17,10 +17,6 @@ import (
 	"github.com/jabahum/foundry/internal/upgrade"
 )
 
-// Version is overridden from the release tag at build time. Keeping a useful
-// fallback makes `go install` and local source builds self-describing.
-var Version = "1.2.0"
-
 type App struct{ FS fs.FS }
 
 func (a App) Run(args []string) int {
@@ -68,7 +64,7 @@ func (a App) Run(args []string) int {
 		doctor.Print()
 		return 0
 	case "version", "--version", "-v":
-		fmt.Println("foundry", Version)
+		fmt.Println("foundry", CurrentVersion())
 		return 0
 	case "help", "--help", "-h":
 		usage()
@@ -82,7 +78,7 @@ func (a App) Run(args []string) int {
 
 func (a App) interactive() int {
 	r := bufio.NewReader(os.Stdin)
-	fmt.Println("Foundry v" + Version + " — project foundations")
+	fmt.Println("Foundry " + CurrentVersion() + " — project foundations")
 	fmt.Print("Project name: ")
 	name, _ := r.ReadString('\n')
 	name = strings.TrimSpace(name)
