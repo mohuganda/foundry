@@ -8,7 +8,7 @@ Foundry is a single Go CLI for creating and extending projects from reusable fou
 - offline project generation with no template downloads or packaging step
 - `foundry template list` to inspect the bundled templates
 - `foundry add service` and `foundry add migration` for Go projects
-- `foundry add feature` and `foundry add package` for Flutter workspaces
+- `foundry add feature` for Flutter, Vanilla JavaScript, and React; `foundry add package` for Flutter
 
 ## Bundled templates
 
@@ -86,6 +86,7 @@ go build -trimpath -o foundry.exe ./cmd/foundry
 | Diagnose | `doctor [--project <root>]` | Detect the current/parent workspace or select an explicit root |
 | Create | `foundry`, `new` | Parent folder of the new project; or specify `--destination` |
 | Extend Go | `add service`, `repository`, `usecase`, `proto`, `migration` | Generated Go root, or select it with `--project` |
+| Extend web | `add feature` | Generated Vanilla JS/React root, or select it with `--project` |
 | Extend Flutter | `add feature`, `add package`, `mason` | Generated Flutter workspace root; `add` accepts `--project` |
 | Maintain | `upgrade --check` | Any generated root, or select it with `--project` |
 | Develop and validate | Make, Melos, npm, Cargo | The relevant generated workspace root |
@@ -178,6 +179,15 @@ foundry add package foundation_analytics
 ```
 
 A Flutter feature is created as a small clean slice with `domain`, `application`, `data`, and `presentation` directories.
+
+Web (Vanilla JavaScript or React):
+
+```sh
+foundry add feature order-history --project ./storefront --dry-run
+foundry add feature order-history --project ./storefront
+```
+
+Foundry selects the UI/test scaffold from the workspace kind. Import the generated feature from a page, implement its behavior, and run `npm run check`.
 
 ## Template delivery
 

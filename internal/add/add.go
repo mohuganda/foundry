@@ -227,9 +227,9 @@ func writeFiles(root string, files map[string]string, kind string, options ...Op
 	if p.Kind != kind {
 		return nil, fmt.Errorf("%s generator requires a %s workspace; found %s", kind, kind, p.Kind)
 	}
-	marker := "go.mod"
-	if kind == "flutter" {
-		marker = "pubspec.yaml"
+	marker := map[string]string{"go": "go.mod", "flutter": "pubspec.yaml", "javascript": "package.json", "react": "package.json"}[kind]
+	if marker == "" {
+		return nil, fmt.Errorf("unsupported scaffold workspace %q", kind)
 	}
 	if st, err := os.Stat(filepath.Join(root, marker)); err != nil || !st.Mode().IsRegular() {
 		return nil, fmt.Errorf("%s missing from workspace", marker)

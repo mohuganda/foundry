@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add workspace-dispatched Vanilla JavaScript/React feature scaffolds with colocated tests, integration notes, dry-run support, and safe name/collision checks.
+
 - Add explicit Flutter feature app selection with --app, reject ambiguous multi-app targets, and support selection in previews.
 
 - Add new/add dry runs, workspace guards, staged generation, collision/symlink preflight, and rollback of handled scaffold write failures; preserve unrelated content during forced generation.

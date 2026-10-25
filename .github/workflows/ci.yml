@@ -71,6 +71,8 @@ jobs:
           cache-dependency-path: templates/${{ matrix.template }}-foundations/package-lock.json
       - name: Generate the bundled template
         run: go run ./cmd/foundry new web-check --template ${{ matrix.template }} --destination "$RUNNER_TEMP/foundry-web" --no-hooks
+      - name: Scaffold and validate a web feature
+        run: go run ./cmd/foundry add feature order-history --project "$RUNNER_TEMP/foundry-web"
       - run: npm ci
         working-directory: ${{ runner.temp }}/foundry-web
       - run: npm run check

@@ -26,6 +26,7 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Creation | `foundry` or `foundry new <name> --template <alias>` | Parent directory; create a project folder. `--destination <path>` overrides its location |
 | Go scaffolding | `foundry add service`, `repository`, `usecase`, `proto`, `migration` | Generated Go root, or `--project <root>`; create files for you to implement and wire |
 | Flutter scaffolding | `foundry add feature`, `foundry add package` | Generated Flutter workspace root, or `--project <root>`; create feature/package files |
+| Web scaffolding | `foundry add feature <name>` | Vanilla JS/React root, or `--project <root>`; create a UI boundary and colocated tests |
 | Mason generation | `foundry mason <brick> [arguments...]` | Flutter workspace root; execute `mason make` from `PATH`, forwarding arguments. No Foundry `--project` option |
 | Maintenance | `foundry upgrade --check` | Any generated root, or `--project <root>`; compare recorded and bundled versions, without modifying files |
 
@@ -38,11 +39,12 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Create from bundled source | Yes | Yes | Yes | Yes | Yes |
 | Check recorded template version | Yes | Yes | Yes | Yes | Yes |
 | Add backend service/repository/use case/proto/migration | Yes | — | — | — | — |
-| Add workspace feature/package | — | Yes | — | — | — |
+| Add feature | — | Yes | Yes | Yes | — |
+| Add shared package | — | Yes | — | — | — |
 | Generate Mason bricks | — | Yes, with Mason installed | — | — | — |
 | Run/test/build | Make / Go | FVM / Melos / Flutter | npm | npm | Cargo / check scripts |
 
-A dash means the operation has no generator for that template. Foundry validates that Go/Flutter generators target the matching workspace and native manifest before writing. Use `--dry-run` to preview paths; planned collisions fail before any files are created. For web and Rust projects, add modules using the structure documented in their generated README.
+A dash means the operation has no generator for that template. Foundry validates that Go/Flutter generators target the matching workspace and native manifest before writing. Use `--dry-run` to preview paths; planned collisions fail before any files are created. Web feature scaffolds follow their generated README; Rust modules are still created manually.
 
 ## Go workflow
 
@@ -130,7 +132,7 @@ npm ci
 npm run dev
 ```
 
-Stop the development server with Ctrl+C. Add product capabilities under `src/features/`, compose screens under `src/pages/`, and keep reusable code in `src/shared/`. Foundry has no web `add feature` command.
+Stop the development server with Ctrl+C. Add product capabilities under `src/features/`, compose screens under `src/pages/`, and keep reusable code in `src/shared/`. Run `foundry add feature order-history` (or add `--dry-run` first) to generate a feature UI, colocated tests, and integration notes. Import it from the owning page; existing pages and routes are not edited.
 
 Before committing or handing off a build:
 
