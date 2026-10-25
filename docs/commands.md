@@ -92,7 +92,7 @@ For a generated Go project, run `gofmt -l ./cmd ./internal ./gen`, `go vet ./...
 | `foundry list` | Print bundled IDs, versions, and descriptions |
 | `foundry template list` | Same bundled listing; `templates` is a command alias and `foundry template` also lists |
 | `foundry info <template>` | Show its canonical ID, version, aliases, and description |
-| `foundry doctor` | Report OS and tool availability on `PATH`; it does not install tools or validate all tool versions |
+| `foundry doctor` | Detect the workspace and check relevant tool/SDK versions; print fixes without installing anything |
 | `foundry new <name> --template <template> [flags]` | Copy the selected bundled foundation and write `.foundry.yaml` |
 
 | Template ID | Accepted short aliases |
@@ -345,3 +345,11 @@ For template changes, generate a fresh project and run its native gate. Passing 
 ## Version reporting
 
 `foundry version` reports an injected release version when supplied by the release build. For `go install ...@<version>`, it reads the main module version from Go build metadata. Local builds without a module version report `dev`, with the VCS revision and dirty marker when available. Make's explicit `VERSION=dev` remains `dev`; no version is inferred from the bundled template versions.
+
+## Workspace-aware doctor
+
+Run `foundry doctor` from a generated root or subdirectory, or use `foundry doctor --project ./backend` to select an exact root. Foundry metadata takes precedence over native manifests; inconsistent/unsupported metadata produces an error. Without metadata, Go/Cargo/npm manifests and Flutter workspace markers identify the project. An explicit path must identify a supported root.
+
+Go checks the compiler requirement in go.mod; Rust checks Cargo.toml's minimum compiler plus Cargo, Clippy, and rustfmt. Web projects check the foundation's supported Node versions and npm. Flutter checks FVM and compares the cached selected SDK version with .fvmrc without invoking Flutter or installing SDKs. Version probes run from the workspace root with a five-second timeout. Optional Go contract/container tooling is reported separately.
+
+Exit 1 means a required check or workspace detection failed; optional tooling failures do not fail the command. Outside a recognized workspace, doctor shows optional tool availability and returns success. It reports tool readiness, not whether dependencies are installed or application tests pass. Use the project's native quality gate afterward.

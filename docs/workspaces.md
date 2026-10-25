@@ -22,7 +22,7 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Category | Commands | Working directory and effect |
 | --- | --- | --- |
 | Discovery | `foundry help`, `foundry list`, `foundry template list`, `foundry info <template>`, `foundry version` | Anywhere; print help or bundled metadata |
-| Environment inspection | `foundry doctor` | Anywhere; report availability of tools on `PATH`, without installing them |
+| Environment inspection | `foundry doctor` | Search the current folder and parents for a workspace, check relevant tools/versions, and print fixes; `--project <root>` selects an exact root |
 | Creation | `foundry` or `foundry new <name> --template <alias>` | Parent directory; create a project folder. `--destination <path>` overrides its location |
 | Go scaffolding | `foundry add service`, `repository`, `usecase`, `proto`, `migration` | Generated Go root, or `--project <root>`; create files for you to implement and wire |
 | Flutter scaffolding | `foundry add feature`, `foundry add package` | Generated Flutter workspace root, or `--project <root>`; create feature/package files |

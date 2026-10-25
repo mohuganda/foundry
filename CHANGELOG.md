@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make doctor workspace-aware with scoped tool/version checks, explicit root selection, required/optional status, and actionable remediation.
+
 - Report source-install versions from Go build metadata and identify local development builds without a stale hardcoded release fallback.
 
 - Add a Homebrew tap backed by this repository's Formula directory and verified macOS/Linux release archives.

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -15,6 +16,7 @@ import (
 	"github.com/jabahum/foundry/internal/generator"
 	"github.com/jabahum/foundry/internal/registry"
 	"github.com/jabahum/foundry/internal/upgrade"
+	"github.com/jabahum/foundry/internal/workspace"
 )
 
 type App struct{ FS fs.FS }
@@ -22,7 +24,7 @@ type App struct{ FS fs.FS }
 func (a App) Run(args []string) int {
 	if len(args) > 1 {
 		switch args[0] {
-		case "list", "doctor", "version", "--version", "-v", "help", "--help", "-h":
+		case "list", "version", "--version", "-v", "help", "--help", "-h":
 			fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry help")
 			return 2
 		}
@@ -61,8 +63,7 @@ func (a App) Run(args []string) int {
 		printInfo(t)
 		return 0
 	case "doctor":
-		doctor.Print()
-		return 0
+		return doctorCmd(args[1:])
 	case "version", "--version", "-v":
 		fmt.Println("foundry", CurrentVersion())
 		return 0
@@ -74,6 +75,36 @@ func (a App) Run(args []string) int {
 		usage()
 		return 2
 	}
+}
+
+func doctorCmd(args []string) int {
+	f := flag.NewFlagSet("doctor", flag.ContinueOnError)
+	project := f.String("project", "", "workspace root; default searches current directory and parents")
+	if err := f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
+		return 2
+	}
+	if f.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry doctor --help")
+		return 2
+	}
+	var p workspace.Project
+	var err error
+	if *project != "" {
+		p, err = workspace.At(*project)
+	} else {
+		p, err = workspace.Find(".")
+	}
+	if err != nil && (*project != "" || !errors.Is(err, workspace.ErrNotFound)) {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
+	if !doctor.Print(os.Stdout, p, doctor.Inspect(p)) {
+		return 1
+	}
+	return 0
 }
 
 func (a App) interactive() int {
@@ -344,7 +375,7 @@ Discover (any directory):
   foundry list                              List bundled templates
   foundry template list                     Alias for list
   foundry info <template>                    Show template details and aliases
-  foundry doctor                            Report tools available on PATH
+  foundry doctor [--project path]           Check workspace tools and SDK versions
   foundry version                            Show executable version
 
 Create (run from the parent directory):

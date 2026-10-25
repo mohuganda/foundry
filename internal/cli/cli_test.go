@@ -122,3 +122,16 @@ func TestUnexpectedArgumentsAndWriteUpgradeModeAreRejected(t *testing.T) {
 		}
 	}
 }
+
+func TestDoctorHelpAndInvalidProject(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	if code := app.Run([]string{"doctor", "--help"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := app.Run([]string{"doctor", "--project", t.TempDir()}); code != 1 {
+		t.Fatalf("unknown project: %d", code)
+	}
+	if code := app.Run([]string{"doctor", "extra"}); code != 2 {
+		t.Fatal(code)
+	}
+}
