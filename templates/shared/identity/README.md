@@ -28,3 +28,12 @@ not rewrite your shared UI components or remove old unused image files. Remove
 obsolete copied assets explicitly before deployment. After syncing, run the native
 formatter and quality gate. Branding approval metadata records your declaration;
 Foundry cannot verify Ministry authorisation or approve assets on your behalf.
+
+## Shared login design
+
+Client sign-in screens share the generated identity/login-design.json specification.
+Identity sync also rebuilds auth/keycloak-theme/foundry/login for provider deployment.
+Select foundry as the Keycloak login theme after deploying it; the development realm
+already mounts/selects it. Other OIDC providers require their own hosted-page theme.
+Sync updates generated design data/tokens; adopt current editable UI components when
+upgrading an earlier application. No official assets or approved fonts are invented.

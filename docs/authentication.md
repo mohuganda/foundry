@@ -175,3 +175,5 @@ Go signature/issuer/audience/expiry/type/key rotation, issuer-bound local users,
 real Keycloak discovery/client-credentials access tokens using the disposable fixture.
 Browser and mobile interactive login use library-backed adapters with mocked provider
 boundaries in tests; automated device/browser sign-in against Keycloak is not included.
+
+See the [shared login design guide](login-design.md) for consistent client layouts and the matching Keycloak theme.
