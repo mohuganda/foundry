@@ -42,7 +42,7 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Generate Mason bricks | — | Yes, with Mason installed | — | — | — |
 | Run/test/build | Make / Go | FVM / Melos / Flutter | npm | npm | Cargo / check scripts |
 
-A dash means the operation has no generator for that template. Foundry does not enforce every workspace/type combination before writing files: choose the matching command explicitly. For web and Rust projects, add modules using the structure documented in their generated README.
+A dash means the operation has no generator for that template. Foundry validates that Go/Flutter generators target the matching workspace and native manifest before writing. Use `--dry-run` to preview paths; planned collisions fail before any files are created. For web and Rust projects, add modules using the structure documented in their generated README.
 
 ## Go workflow
 

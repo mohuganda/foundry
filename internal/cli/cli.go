@@ -154,6 +154,7 @@ func (a App) newCmd(args []string) int {
 	pkg := f.String("package", "", "Flutter package/app id token")
 	dest := f.String("destination", "", "output directory")
 	force := f.Bool("force", false, "allow generation into non-empty directory")
+	dryRun := f.Bool("dry-run", false, "preview generated paths without changing the destination or running hooks")
 	noHooks := f.Bool("no-hooks", false, "skip post-generation hooks")
 	if err := f.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -188,10 +189,13 @@ func (a App) newCmd(args []string) int {
 		return 1
 	}
 	g := generator.Generator{FS: a.FS}
-	err = g.Generate(selected, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, Force: *force, NoHooks: *noHooks})
+	err = g.Generate(selected, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, Force: *force, NoHooks: *noHooks, DryRun: *dryRun})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
+	}
+	if *dryRun {
+		return 0
 	}
 	fmt.Println("Template source: bundled files")
 	if selected.Kind == "javascript" || selected.Kind == "react" {
@@ -220,6 +224,7 @@ Run from the generated root, or select it with --project. No add generators for 
 	f := flag.NewFlagSet("add", flag.ContinueOnError)
 	f.SetOutput(os.Stderr)
 	project := f.String("project", ".", "project root")
+	dryRun := f.Bool("dry-run", false, "preview planned files without writing them")
 	rest := args[2:]
 	usecase := ""
 	if kind == "usecase" && len(rest) > 0 && !strings.HasPrefix(rest[0], "-") {
@@ -247,24 +252,24 @@ Run from the generated root, or select it with --project. No add generators for 
 	var result addgen.Result
 	switch kind {
 	case "service", "grpc-service":
-		result, err = addgen.GoService(root, name)
+		result, err = addgen.GoService(root, name, addgen.Options{DryRun: *dryRun})
 	case "repository":
-		result, err = addgen.GoRepository(root, name)
+		result, err = addgen.GoRepository(root, name, addgen.Options{DryRun: *dryRun})
 	case "usecase":
 		domain := name
 		uc := usecase
 		if uc == "" {
 			uc = "execute"
 		}
-		result, err = addgen.GoUsecase(root, domain, uc)
+		result, err = addgen.GoUsecase(root, domain, uc, addgen.Options{DryRun: *dryRun})
 	case "proto":
-		result, err = addgen.GoProto(root, name)
+		result, err = addgen.GoProto(root, name, addgen.Options{DryRun: *dryRun})
 	case "migration":
-		result, err = addgen.GoMigration(root, name)
+		result, err = addgen.GoMigration(root, name, addgen.Options{DryRun: *dryRun})
 	case "feature":
-		result, err = addgen.FlutterFeature(root, name)
+		result, err = addgen.FlutterFeature(root, name, addgen.Options{DryRun: *dryRun})
 	case "package":
-		result, err = addgen.FlutterPackage(root, name)
+		result, err = addgen.FlutterPackage(root, name, addgen.Options{DryRun: *dryRun})
 	default:
 		fmt.Fprintf(os.Stderr, "unknown add generator %q\n", kind)
 		return 2
@@ -273,7 +278,11 @@ Run from the generated root, or select it with --project. No add generators for 
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
 	}
-	fmt.Printf("Added %s %q\n", kind, name)
+	if *dryRun {
+		fmt.Printf("Would add %s %q (no files changed)\n", kind, name)
+	} else {
+		fmt.Printf("Added %s %q\n", kind, name)
+	}
 	for _, p := range result.Files {
 		fmt.Println("  +", p)
 	}
@@ -383,7 +392,7 @@ Create (run from the parent directory):
   foundry new <name> --template go [--module path]
   foundry new <name> --template flutter [--org com.example]
   foundry new <name> --template <vanilla-js|react|rust>
-  Options: --destination path, --version version, --no-hooks, --force
+  Options: --destination path, --version version, --no-hooks, --force, --dry-run
   Run foundry new --help for all creation flags.
 
 Extend Go (generated project root, or --project path):

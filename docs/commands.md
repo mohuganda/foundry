@@ -114,6 +114,7 @@ Put the project name before flags: `foundry new portal --template react --destin
 | `--org` | Flutter organization placeholder; native Flutter scaffolding defaults to `com.example` if omitted |
 | `--package` | Flutter package placeholder/metadata token; Mason app variables are configured separately when generating a Mason app |
 | `--no-hooks` | False; when true, skip optional pre/post generation tools |
+| `--dry-run` | False; validate and list generated paths without changing the destination; hooks are skipped |
 | `--force` | False; allow writing into a non-empty destination. Matching template files can be overwritten; unrelated files are retained |
 
 Generation copies embedded source files, removes file suffixes such as `.go.tmpl`, substitutes project tokens, and restores executable shell-script permissions. JavaScript manifests, HTML, configuration and lockfiles receive the project name. Rust manifests, source, tests and lockfiles receive a valid crate identifier; reserved names and digit-leading names are prefixed with `app_`.
@@ -124,7 +125,7 @@ The optional Go hook attempts `go fmt ./...`. Legacy Flutter hooks attempt nativ
 
 ### Extend a project
 
-All `add` commands default to the current folder; `--project <path>` chooses another root. They create source scaffolds and print the remaining implementation/wiring steps. They refuse to overwrite existing files. A command can have written earlier files before a later collision is found; inspect changes after any failure.
+All `add` commands default to the current folder; `--project <path>` chooses another root. They create source scaffolds and print the remaining implementation/wiring steps. They refuse to overwrite existing files. Workspace type and all planned collisions are checked before writes. `--dry-run` validates the same plan and lists paths without changing the project. Handled write failures restore overwritten files and remove files/directories created by the operation; rollback failures are reported.
 
 | Command | Outputs / follow-up |
 | --- | --- |
@@ -353,3 +354,14 @@ Run `foundry doctor` from a generated root or subdirectory, or use `foundry doct
 Go checks the compiler requirement in go.mod; Rust checks Cargo.toml's minimum compiler plus Cargo, Clippy, and rustfmt. Web projects check the foundation's supported Node versions and npm. Flutter checks FVM and compares the cached selected SDK version with .fvmrc without invoking Flutter or installing SDKs. Version probes run from the workspace root with a five-second timeout. Optional Go contract/container tooling is reported separately.
 
 Exit 1 means a required check or workspace detection failed; optional tooling failures do not fail the command. Outside a recognized workspace, doctor shows optional tool availability and returns success. It reports tool readiness, not whether dependencies are installed or application tests pass. Use the project's native quality gate afterward.
+
+## Scaffold safety and previews
+
+```sh
+foundry new backend --template go --dry-run
+foundry add service orders --project ./backend --dry-run
+```
+
+`new` renders into a temporary staging directory, then validates and applies only generated paths. Dry runs remove their staging directory and never run hooks or change the destination. Existing non-empty destinations require `--force`; metadata for another template kind is rejected even with force. Unrelated destination files are not substituted or formatted. SDK/cache output produced by legacy staging hooks is excluded from the resulting project.
+
+`add` requires the matching Go/Flutter workspace and native root manifest. It never overwrites existing files. Both creation and extension reject symlinks at the selected root or inside planned output paths, escaping paths, and file/directory conflicts. Handled write failures trigger rollback, including original contents and permissions for overwritten files. This is not a crash-safe transaction or a lock against concurrent filesystem changes: avoid concurrent edits to the same planned paths, and inspect any reported rollback errors. External generation hooks can affect SDK/package caches outside the destination; use `--no-hooks` for an explicit setup workflow.

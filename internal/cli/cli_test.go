@@ -135,3 +135,24 @@ func TestDoctorHelpAndInvalidProject(t *testing.T) {
 		t.Fatal(code)
 	}
 }
+
+func TestCLIDryRunsDoNotWrite(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	root := t.TempDir()
+	dest := filepath.Join(root, "new")
+	if code := app.Run([]string{"new", "demo", "--template", "go", "--destination", dest, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Fatal("new dry-run wrote destination")
+	}
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module acme.org/api\ngo 1.23\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if code := app.Run([]string{"add", "service", "orders", "--project", root, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if _, err := os.Stat(filepath.Join(root, "api")); !os.IsNotExist(err) {
+		t.Fatal("add dry-run wrote source")
+	}
+}
