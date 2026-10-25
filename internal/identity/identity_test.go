@@ -103,3 +103,44 @@ func TestRustStringsEscapeWithoutRawDelimiterLimits(t *testing.T) {
 		t.Fatal("Rust string literals are not escaped")
 	}
 }
+
+func TestSharedLoginDesignAndTheme(t *testing.T) {
+	c, _ := Default("moh-uganda", "Programme Portal")
+	c.Organisation.Name = `Ministry <script>alert(1)</script>`
+	for _, kind := range []string{"go", "javascript", "react", "flutter", "rust"} {
+		files, err := Render(foundry.Templates, c, nil, kind)
+		if err != nil {
+			t.Fatal(err)
+		}
+		design := files[filepath.FromSlash("identity/login-design.json")].Data
+		if !strings.Contains(string(design), `"max_width": 440`) {
+			t.Fatal("missing shared design")
+		}
+		root := "auth/keycloak-theme/foundry/login/"
+		props := string(files[filepath.FromSlash(root+"theme.properties")].Data)
+		if !strings.Contains(props, "parent=keycloak.v2") {
+			t.Fatal("provider forms are not inherited")
+		}
+		messages := string(files[filepath.FromSlash(root+"messages/messages_en.properties")].Data)
+		if strings.Contains(messages, "<script>") || !strings.Contains(messages, "&lt;script&gt;") {
+			t.Fatal("organisation text injected HTML")
+		}
+		if !strings.Contains(string(files[filepath.FromSlash(root+"resources/css/foundry-tokens.css")].Data), "--login-max-width: 440px") {
+			t.Fatal("provider design drift")
+		}
+		if kind == "javascript" || kind == "react" {
+			if string(files[filepath.FromSlash("src/shared/identity/login.json")].Data) != string(design) {
+				t.Fatal("web design drift")
+			}
+		}
+		if kind == "flutter" {
+			fixture, err := foundry.Templates.ReadFile("templates/flutter_foundations/packages/foundation_identity/lib/src/login_design.dart")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(fixture) != string(files[filepath.FromSlash("packages/foundation_identity/lib/src/login_design.dart")].Data) {
+				t.Fatal("Flutter login fixture differs from shared contract; regenerate it")
+			}
+		}
+	}
+}

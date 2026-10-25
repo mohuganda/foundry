@@ -6,9 +6,11 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	coreoidc "github.com/coreos/go-oidc/v3/oidc"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -60,4 +62,47 @@ func TestKeycloakIntegration(t *testing.T) {
 	if _, e = wrong.Verify(ctx, token.AccessToken); e == nil {
 		t.Fatal("accepted wrong audience")
 	}
+	// The inherited credential form must render with the shared theme, not a broken override.
+	authorize := issuer + "/protocol/openid-connect/auth?" + url.Values{"client_id": {"programme-web"}, "redirect_uri": {"https://localhost:5173/auth/callback"}, "response_type": {"code"}, "scope": {"openid"}, "state": {"theme-check"}, "nonce": {"theme-check"}, "code_challenge_method": {"S256"}, "code_challenge": {"012345678901234567890123456789012345678901234"}}.Encode()
+	page, e := client.Get(authorize)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer page.Body.Close()
+	body, e := io.ReadAll(page.Body)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if page.StatusCode != 200 || !strings.Contains(string(body), "foundry.css") || !strings.Contains(string(body), "foundry-organisation") || !strings.Contains(string(body), "login-actions/authenticate") {
+		t.Fatalf("themed Keycloak credential page did not render (status %d)", page.StatusCode)
+	}
+
+	resources := regexp.MustCompile(`href="([^"]*foundry(?:-tokens)?\.css)"`).FindAllStringSubmatch(string(body), -1)
+	if len(resources) != 2 {
+		t.Fatal("shared theme stylesheets are missing")
+	}
+	for _, resource := range resources {
+		target, e := url.Parse(resource[1])
+		if e != nil {
+			t.Fatal(e)
+		}
+		base, _ := url.Parse(issuer)
+		target = base.ResolveReference(target)
+		asset, e := client.Get(target.String())
+		if e != nil {
+			t.Fatal(e)
+		}
+		data, e := io.ReadAll(asset.Body)
+		asset.Body.Close()
+		if e != nil {
+			t.Fatal(e)
+		}
+		if asset.StatusCode != 200 || len(data) == 0 {
+			t.Fatalf("theme resource failed: %d", asset.StatusCode)
+		}
+		if strings.Contains(resource[1], "foundry-tokens.css") && !strings.Contains(string(data), "--login-max-width: 440px") {
+			t.Fatal("provider theme design contract missing")
+		}
+	}
+
 }
