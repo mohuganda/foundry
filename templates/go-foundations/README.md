@@ -251,16 +251,18 @@ Local authentication is enabled by default. To additionally accept OIDC access t
 ```dotenv
 OIDC_ENABLED=true
 OIDC_ISSUER_URL=https://auth.example.org/realms/example
-OIDC_CLIENT_ID=grpc-api
+OIDC_AUDIENCE=grpc-api
+OIDC_TOKEN_PROFILE=keycloak
 ```
 
-External identities must be linked to a local user so local RBAC remains authoritative. The relevant fields are `users.auth_provider='oidc'` and `users.external_subject=<OIDC sub>`.
+External identities must be linked to a local user so local RBAC remains authoritative. The relevant fields are `users.auth_provider='oidc'`, `users.external_issuer=<exact issuer>`, and `users.external_subject=<OIDC sub>`.
 
 Example linking an existing user:
 
 ```sql
 UPDATE users
 SET auth_provider = 'oidc',
+    external_issuer = 'https://auth.example.org/realms/example',
     external_subject = 'OIDC-SUBJECT-HERE',
     password_hash = NULL
 WHERE email = 'person@example.com';
@@ -419,3 +421,12 @@ from the generated root, then run `foundry identity sync` and the native formatt
 and quality gate. Shared layouts and report helpers consume the generated public
 metadata. Ownership references stay in the canonical source; never store secrets
 there. No approved logos, colours, or fonts are supplied.
+
+## Configurable authentication
+
+OIDC is optional. Create/edit settings with `foundry auth example > oidc.json`,
+validate using `foundry auth validate --file oidc.json --template go`, then pass
+`--auth oidc --auth-config oidc.json` during creation. Generated `auth/README.md`
+covers enabling/disabling authentication, callback setup, provider compatibility,
+and local Keycloak tests. Edit `auth/auth.json` and run `foundry auth configure`
+from the root to update bindings, then format, test, and rebuild.

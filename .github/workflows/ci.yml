@@ -70,7 +70,9 @@ jobs:
           cache: npm
           cache-dependency-path: templates/${{ matrix.template }}-foundations/package-lock.json
       - name: Generate the bundled template
-        run: go run ./cmd/foundry new web-check --template ${{ matrix.template }} --profile moh-uganda --destination "$RUNNER_TEMP/foundry-web" --no-hooks
+        run: |
+          go run ./cmd/foundry auth example > "$RUNNER_TEMP/auth.json"
+          go run ./cmd/foundry new web-check --template ${{ matrix.template }} --profile moh-uganda --auth-config "$RUNNER_TEMP/auth.json" --destination "$RUNNER_TEMP/foundry-web" --no-hooks
       - name: Scaffold and validate a web feature
         run: go run ./cmd/foundry add feature order-history --project "$RUNNER_TEMP/foundry-web"
       - run: npm ci
@@ -127,7 +129,9 @@ jobs:
         with:
           go-version: '1.23.x'
           cache: true
-      - run: go run ./cmd/foundry new moh-backend --template go --profile moh-uganda --destination "$RUNNER_TEMP/foundry-go" --no-hooks
+      - run: |
+          go run ./cmd/foundry auth example > "$RUNNER_TEMP/auth.json"
+          go run ./cmd/foundry new moh-backend --template go --profile moh-uganda --auth-config "$RUNNER_TEMP/auth.json" --destination "$RUNNER_TEMP/foundry-go" --no-hooks
       - run: go test ./...
         working-directory: ${{ runner.temp }}/foundry-go
 
@@ -145,7 +149,9 @@ jobs:
           flutter-version-file: templates/flutter_foundations/.fvmrc
           channel: stable
           cache: true
-      - run: go run ./cmd/foundry new moh-flutter --template flutter --profile moh-uganda --destination "$RUNNER_TEMP/foundry-flutter" --no-hooks
+      - run: |
+          go run ./cmd/foundry auth example > "$RUNNER_TEMP/auth.json"
+          go run ./cmd/foundry new moh-flutter --template flutter --profile moh-uganda --auth-config "$RUNNER_TEMP/auth.json" --destination "$RUNNER_TEMP/foundry-flutter" --no-hooks
       - name: Connect pinned SDK and activate Mason
         run: |
           mkdir -p "$RUNNER_TEMP/foundry-flutter/.fvm"
@@ -155,10 +161,31 @@ jobs:
         working-directory: ${{ runner.temp }}/foundry-flutter
         run: |
           dart pub get
-          dart format --output=none --set-exit-if-changed packages/foundation_identity
+          dart format --output=none --set-exit-if-changed packages/foundation_identity packages/foundation_auth
+          dart analyze packages/foundation_auth
           dart analyze packages/foundation_identity
-          flutter test --no-pub packages/foundation_identity/test
+          flutter test --no-pub packages/foundation_auth/test packages/foundation_identity/test
           bash scripts/validate_bricks.sh
+
+  keycloak-integration:
+    name: Keycloak access-token integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: true
+      - run: go run ./cmd/foundry new auth-check --template go --destination "$RUNNER_TEMP/foundry-keycloak" --no-hooks
+      - run: bash auth/dev/start.sh
+        working-directory: ${{ runner.temp }}/foundry-keycloak
+      - run: go test ./internal/infrastructure/auth/oidc -run TestKeycloakIntegration -v
+        working-directory: ${{ runner.temp }}/foundry-keycloak
+        env:
+          FOUNDRY_KEYCLOAK_TEST_CA: ${{ runner.temp }}/foundry-keycloak/auth/dev/certs/server.crt
+      - name: Stop disposable identity provider
+        if: always()
+        run: docker compose -f "$RUNNER_TEMP/foundry-keycloak/auth/dev/compose.yaml" down
 
   docker:
     name: Docker distribution

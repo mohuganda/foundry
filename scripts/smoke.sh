@@ -15,6 +15,7 @@ binary=${FOUNDRY_BIN:-"$repo_root/bin/foundry"}
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/foundry-smoke.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 
+"$binary" auth example > "$scratch/oidc.json"
 "$binary" version
 "$binary" template list
 for template in go flutter vanilla-js react rust; do
@@ -26,6 +27,11 @@ for template in go flutter vanilla-js react rust; do
     "$binary" new smoke --template "$template" --profile moh-uganda --destination "$project" --no-hooks
   fi
   test -f "$project/.foundry.yaml"
+  if [ "$template" != rust ]; then
+    "$binary" auth validate --file "$scratch/oidc.json" --template "$template"
+    "$binary" auth configure --project "$project" --file "$scratch/oidc.json" --dry-run
+    "$binary" auth configure --project "$project" --file "$scratch/oidc.json"
+  fi
   "$binary" identity validate --file "$project/identity/identity.json"
   "$binary" identity sync --project "$project" --dry-run
   grep -q '"name": "Ministry of Health"' "$project/identity/public.json"
