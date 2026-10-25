@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "eyebrow": "Organisation access",
+  "title": "Sign in",
+  "description": "Use your organisation account to continue.",
+  "action": "Continue",
+  "pending_action": "Opening sign-in…",
+  "notice": "You’ll continue to your organisation’s sign-in service.",
+  "max_width": 440,
+  "padding": 24,
+  "control_height": 48,
+  "title_size": 32
+}

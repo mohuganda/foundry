@@ -1,3 +1,4 @@
+import login from './login.json';
 import {
   assetURL,
   identity,
@@ -45,9 +46,13 @@ function brandImages(profile) {
   return group;
 }
 
-export function createIdentityShell(content, profile = identity) {
+export function createIdentityShell(
+  content,
+  profile = identity,
+  { authentication = false } = {},
+) {
   const element = document.createElement('div');
-  element.className = 'shell identity-shell';
+  element.className = `shell identity-shell${authentication ? ' identity-shell--auth' : ''}`;
   const skip = text('a', 'Skip to content', 'skip-link');
   skip.href = '#main';
   const header = document.createElement('header');
@@ -99,17 +104,23 @@ export function createIdentityShell(content, profile = identity) {
     links.append(anchor);
   }
   footer.append(links);
-  element.append(skip, header);
-  if (nav.childElementCount) element.append(nav);
+  element.append(skip);
+  if (!authentication) element.append(header);
+  if (!authentication && nav.childElementCount) element.append(nav);
   element.append(main, footer);
   return { element, destroy: () => element.remove() };
 }
 
 export function createIdentityState(
   kind,
-  { message = '', onAction } = {},
+  { message = '', onAction, pending = false, error = '' } = {},
   profile = identity,
 ) {
+  if (kind === 'sign-in')
+    return createIdentitySignIn(
+      { onSignIn: onAction, pending, error, description: message },
+      profile,
+    );
   const element = document.createElement('section');
   element.className = 'card identity-state';
   const heading = {
@@ -169,4 +180,81 @@ export function createIdentityReportHeader(
     element.append(text('p', `Date: ${metadata.issuedOn}`));
   if (metadata.footer) element.append(text('p', metadata.footer));
   return element;
+}
+
+export function createIdentitySignIn(
+  { onSignIn, pending = false, error = '', description = '' } = {},
+  profile = identity,
+) {
+  const element = document.createElement('section');
+  element.className = 'identity-login';
+  element.setAttribute('aria-labelledby', 'sign-in-title');
+  element.setAttribute('aria-busy', String(pending));
+  for (const [name, value] of Object.entries({
+    'max-width': login.max_width,
+    padding: login.padding,
+    'control-height': login.control_height,
+    'title-size': login.title_size,
+  }))
+    element.style.setProperty(`--login-${name}`, `${value}px`);
+  const brand = document.createElement('div');
+  brand.className = 'identity-login-brand';
+  brand.append(brandImages(profile));
+  if (profile.organisation.country)
+    brand.append(text('p', profile.organisation.country));
+  brand.append(text('strong', profile.organisation.name));
+  if (profile.application.environment !== 'production')
+    brand.append(
+      text(
+        'span',
+        `${profile.application.environment} environment`,
+        'identity-environment',
+      ),
+    );
+  const content = document.createElement('div');
+  content.className = 'identity-login-content';
+  content.append(
+    text('p', login.eyebrow, 'identity-login-eyebrow'),
+    text('p', profile.application.name, 'identity-login-product'),
+  );
+  const context = [
+    profile.application.department,
+    profile.application.programme,
+  ]
+    .filter(Boolean)
+    .join(' / ');
+  if (context) content.append(text('p', context, 'muted'));
+  const title = text('h1', login.title);
+  title.id = 'sign-in-title';
+  content.append(title, text('p', description || login.description, 'muted'));
+  if (error) {
+    const alert = text('p', error, 'identity-login-error');
+    alert.setAttribute('role', 'alert');
+    content.append(alert);
+  }
+  const button = text(
+    'button',
+    pending ? login.pending_action : login.action,
+    'button identity-login-action',
+  );
+  button.type = 'button';
+  button.disabled = pending || !onSignIn;
+  const controller = new AbortController();
+  if (onSignIn)
+    button.addEventListener('click', onSignIn, { signal: controller.signal });
+  content.append(button);
+  if (pending) {
+    const status = text('p', login.pending_action, 'identity-login-progress');
+    status.setAttribute('role', 'status');
+    content.append(status);
+  }
+  content.append(text('p', login.notice, 'identity-login-notice muted'));
+  element.append(brand, content);
+  return {
+    element,
+    destroy() {
+      controller.abort();
+      element.remove();
+    },
+  };
 }

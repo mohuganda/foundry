@@ -326,3 +326,5 @@ Generate an example with `foundry auth example > oidc.json`, edit and validate i
 create with `--auth oidc --auth-config oidc.json`. Authentication remains disabled by
 default in frontends; Go retains local JWT. See the [authentication guide](docs/authentication.md) for
 provider configuration, Keycloak development setup, and platform limitations.
+
+See the [shared login design guide](docs/login-design.md) for consistent client layouts and the matching Keycloak theme.

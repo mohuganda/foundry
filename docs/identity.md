@@ -211,3 +211,5 @@ The repository source is still readable by repository collaborators. Shipping th
 entire source tree in a container or static directory can expose it; build/deploy
 only the intended application output. No arbitrary ownership data should be sent
 to browser clients, logs, reports, or public endpoints.
+
+See the [shared login design guide](login-design.md) for consistent client layouts and the matching Keycloak theme.

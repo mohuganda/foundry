@@ -61,3 +61,28 @@ it('provides loading status and explicit report metadata', () => {
   expect(screen.getByText('Version: 3')).toBeInTheDocument();
   expect(screen.getByText('Date: 2026-10-25')).toBeInTheDocument();
 });
+
+it('uses the common login hierarchy with pending and safe error feedback', () => {
+  const profile = structuredClone(identity);
+  profile.application.name = 'Programme Portal';
+  const { container } = render(
+    <IdentityShell authentication profile={profile}>
+      <IdentitySignIn profile={profile} pending error="Please try again" />
+    </IdentityShell>,
+  );
+  expect(
+    screen.getByRole('heading', { name: 'Sign in', level: 1 }),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole('button', { name: 'Opening sign-in…' }),
+  ).toBeDisabled();
+  expect(screen.getByRole('alert')).toHaveTextContent('Please try again');
+  expect(container.querySelector('.identity-login')).toHaveAttribute(
+    'aria-busy',
+    'true',
+  );
+  expect(container.querySelector('.identity-header')).toBeNull();
+  expect(
+    screen.getByText('Use your organisation account to continue.'),
+  ).toBeTruthy();
+});

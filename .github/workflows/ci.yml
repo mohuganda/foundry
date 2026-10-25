@@ -183,6 +183,22 @@ jobs:
         working-directory: ${{ runner.temp }}/foundry-keycloak
         env:
           FOUNDRY_KEYCLOAK_TEST_CA: ${{ runner.temp }}/foundry-keycloak/auth/dev/certs/server.crt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect provider login layout in a real browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/login-browser" playwright@1.64.1 --ignore-scripts
+          export FOUNDRY_PLAYWRIGHT_PACKAGE="$RUNNER_TEMP/login-browser/node_modules/playwright/package.json"
+          export FOUNDRY_CHROMIUM_EXECUTABLE="$(command -v google-chrome)"
+          export FOUNDRY_LOGIN_SCREENSHOTS="$RUNNER_TEMP/login-screenshots"
+          node scripts/check-login-theme.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: keycloak-login-preview
+          path: ${{ runner.temp }}/login-screenshots
+          if-no-files-found: ignore
       - name: Stop disposable identity provider
         if: always()
         run: docker compose -f "$RUNNER_TEMP/foundry-keycloak/auth/dev/compose.yaml" down

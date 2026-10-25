@@ -37,42 +37,48 @@ class _AppRootState extends State<AppRoot> {
       theme: AppTheme.light(profile),
       darkTheme: AppTheme.dark(profile),
       routerConfig: appRouter,
-      builder: (context, child) => IdentityShell(
-        identity: profile,
-        onOpenLink: (link) => unawaited(
-          openIdentityLink(context, link, onNavigate: appRouter.go),
-        ),
-        child: ListenableBuilder(
-          listenable: authentication,
-          builder: (context, _) {
-            switch (authentication.status) {
-              case OidcStatus.loading:
-                return const IdentityLoading();
-              case OidcStatus.error:
-                return IdentityError(
-                  message: authentication.error,
-                  onRetry: () => unawaited(authentication.signIn()),
-                );
-              case OidcStatus.anonymous:
-                return IdentitySignIn(
-                  identity: profile,
-                  onSignIn: () => unawaited(authentication.signIn()),
-                );
-              case OidcStatus.authenticated:
-                return Column(
-                  children: [
-                    TextButton(
-                      onPressed: () => unawaited(authentication.signOut()),
-                      child: const Text('Sign out'),
-                    ),
-                    Expanded(child: child ?? const SizedBox.shrink()),
-                  ],
-                );
-              case OidcStatus.disabled:
-                return child ?? const SizedBox.shrink();
-            }
-          },
-        ),
+      builder: (context, child) => ListenableBuilder(
+        listenable: authentication,
+        builder: (context, _) {
+          Widget content;
+          switch (authentication.status) {
+            case OidcStatus.loading:
+              content = IdentitySignIn(identity: profile, pending: true);
+            case OidcStatus.error:
+              content = IdentitySignIn(
+                identity: profile,
+                error: authentication.error,
+                onSignIn: () => unawaited(authentication.signIn()),
+              );
+            case OidcStatus.anonymous:
+              content = IdentitySignIn(
+                identity: profile,
+                onSignIn: () => unawaited(authentication.signIn()),
+              );
+            case OidcStatus.authenticated:
+              content = Column(
+                children: [
+                  TextButton(
+                    onPressed: () => unawaited(authentication.signOut()),
+                    child: const Text('Sign out'),
+                  ),
+                  Expanded(child: child ?? const SizedBox.shrink()),
+                ],
+              );
+            case OidcStatus.disabled:
+              content = child ?? const SizedBox.shrink();
+          }
+          return IdentityShell(
+            identity: profile,
+            authentication:
+                authentication.status != OidcStatus.disabled &&
+                authentication.status != OidcStatus.authenticated,
+            onOpenLink: (link) => unawaited(
+              openIdentityLink(context, link, onNavigate: appRouter.go),
+            ),
+            child: content,
+          );
+        },
       ),
     );
   }

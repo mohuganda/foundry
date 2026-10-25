@@ -69,3 +69,110 @@
     color: inherit;
   }
 }
+
+/* Shared client login contract: web DOM, React, Flutter, and provider theme. */
+.identity-shell.identity-shell--auth {
+  width: min(100% - 2rem, 64rem);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--space-large);
+}
+.identity-shell--auth > main {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding-block: var(--space-large);
+}
+.identity-shell--auth .identity-footer {
+  text-align: center;
+}
+.identity-shell--auth .identity-footer nav {
+  justify-content: center;
+}
+.identity-login {
+  width: 100%;
+  max-width: var(--login-max-width);
+  overflow-wrap: anywhere;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-top: 4px solid var(--color-accent);
+  border-radius: var(--radius);
+}
+.identity-login-brand,
+.identity-login-content {
+  padding: var(--login-padding);
+}
+.identity-login-brand {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+.identity-login-brand p {
+  margin: 0 0 var(--space-small);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+.identity-login-brand strong {
+  display: block;
+}
+.identity-login-brand .identity-environment {
+  display: inline-block;
+  margin-top: var(--space-small);
+}
+.identity-login-brand .identity-images:not(:empty) {
+  margin-bottom: var(--space-medium);
+}
+.identity-login-content > :first-child {
+  margin-top: 0;
+}
+.identity-login-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.identity-login-product {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-block: var(--space-small);
+}
+.identity-login h1 {
+  font-size: var(--login-title-size);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-block: var(--space-large) var(--space-small);
+}
+.identity-login-action {
+  width: 100%;
+  min-height: var(--login-control-height);
+  border-radius: var(--radius);
+  margin-top: var(--space-medium);
+}
+.identity-login-notice {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-block: var(--space-medium) 0;
+}
+.identity-login-error {
+  color: var(--color-error);
+  border-inline-start: 3px solid currentColor;
+  padding-inline-start: var(--space-small);
+}
+.identity-login-progress {
+  font-size: 0.875rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .identity-login * {
+    animation: none;
+    transition: none;
+  }
+}
+.identity-shell--auth > main > div {
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.identity-images:empty {
+  display: none;
+}

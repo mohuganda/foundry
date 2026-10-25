@@ -1,11 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { HomePage } from '../pages/home/HomePage.jsx';
-import {
-  IdentityShell,
-  IdentityLoading,
-  IdentityError,
-  IdentitySignIn,
-} from '../shared/identity/Identity.jsx';
+import { IdentityShell, IdentitySignIn } from '../shared/identity/Identity.jsx';
 import { auth } from '../shared/auth/client.js';
 
 export function App() {
@@ -14,10 +9,10 @@ export function App() {
     void auth.initialize();
   }, []);
   let content;
-  if (session.status === 'loading') content = <IdentityLoading />;
+  if (session.status === 'loading') content = <IdentitySignIn pending />;
   else if (session.status === 'error')
     content = (
-      <IdentityError message={session.error} onRetry={() => auth.signIn()} />
+      <IdentitySignIn error={session.error} onSignIn={() => auth.signIn()} />
     );
   else if (session.status === 'anonymous')
     content = <IdentitySignIn onSignIn={() => auth.signIn()} />;
@@ -36,5 +31,11 @@ export function App() {
         <HomePage />
       </>
     );
-  return <IdentityShell>{content}</IdentityShell>;
+  return (
+    <IdentityShell
+      authentication={!['disabled', 'authenticated'].includes(session.status)}
+    >
+      {content}
+    </IdentityShell>
+  );
 }

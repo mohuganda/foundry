@@ -19,3 +19,4 @@ services:
     volumes:
       - ./realm.json:/opt/keycloak/data/import/foundry-realm.json:ro
       - ./certs:/certs:ro
+      - ../keycloak-theme/foundry:/opt/keycloak/themes/foundry:ro
