@@ -6,7 +6,7 @@ The workspace is pinned to Flutter 3.44.8 through FVM. Install [FVM](https://fvm
 
 ## Foundry command scope
 
-Run `foundry add feature <name>` and `foundry add package <name>` from this workspace root, or append `--project <root>` from another directory. Feature generation selects the first app alphabetically under `apps/` with a pubspec; for multiple apps use the FVM Mason feature command with explicit `--app <name>`. Resolve workspace dependencies after adding/registering a package and wire the generated feature into the application.
+Run `foundry add feature <name>` and `foundry add package <name>` from this workspace root, or append `--project <root>` from another directory. Feature generation selects automatically when exactly one app under `apps/` has a pubspec. With multiple apps, run `foundry add feature <name> --app <app-directory>`; omitting the selection lists candidates and stops before writing. Add `--dry-run` to preview the files. The FVM Mason feature command also accepts explicit `--app <name>`. Resolve workspace dependencies after adding/registering a package and wire the generated feature into the application.
 
 `foundry mason <brick> [arguments...]` runs Mason from PATH in the current directory; use the explicit FVM commands below to guarantee the workspace SDK. Run workspace commands at this root and platform builds inside the selected app. `foundry upgrade --check` only compares template versions. Go service/repository/usecase/proto/migration generators belong to Go projects.
 

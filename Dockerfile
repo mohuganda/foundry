@@ -5,10 +5,12 @@ ARG TARGETARCH
 ARG VERSION=dev
 WORKDIR /src
 COPY . .
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
+RUN mkdir -p /rootfs/usr/local/bin /rootfs/workspace /rootfs/tmp \
+    && chmod 1777 /rootfs/tmp \
+    && chown 65532:65532 /rootfs/workspace \
+    && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
     -trimpath -ldflags "-s -w -X github.com/jabahum/foundry/internal/cli.Version=${VERSION}" \
-    -o /out/foundry ./cmd/foundry \
-    && mkdir -p /out/workspace
+    -o /rootfs/usr/local/bin/foundry ./cmd/foundry
 
 FROM scratch
 ARG VERSION=dev
@@ -16,8 +18,7 @@ LABEL org.opencontainers.image.title="Foundry" \
       org.opencontainers.image.description="Offline project generation from five embedded foundations" \
       org.opencontainers.image.source="https://github.com/mohuganda/foundry" \
       org.opencontainers.image.version=$VERSION
-COPY --from=build /out/foundry /usr/local/bin/foundry
-COPY --from=build --chown=65532:65532 /out/workspace /workspace
+COPY --from=build /rootfs/ /
 USER 65532:65532
 WORKDIR /workspace
 ENTRYPOINT ["/usr/local/bin/foundry"]

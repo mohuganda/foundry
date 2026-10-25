@@ -22,7 +22,7 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Category | Commands | Working directory and effect |
 | --- | --- | --- |
 | Discovery | `foundry help`, `foundry list`, `foundry template list`, `foundry info <template>`, `foundry version` | Anywhere; print help or bundled metadata |
-| Environment inspection | `foundry doctor` | Anywhere; report availability of tools on `PATH`, without installing them |
+| Environment inspection | `foundry doctor` | Search the current folder and parents for a workspace, check relevant tools/versions, and print fixes; `--project <root>` selects an exact root |
 | Creation | `foundry` or `foundry new <name> --template <alias>` | Parent directory; create a project folder. `--destination <path>` overrides its location |
 | Go scaffolding | `foundry add service`, `repository`, `usecase`, `proto`, `migration` | Generated Go root, or `--project <root>`; create files for you to implement and wire |
 | Flutter scaffolding | `foundry add feature`, `foundry add package` | Generated Flutter workspace root, or `--project <root>`; create feature/package files |
@@ -42,7 +42,7 @@ Generated `.foundry.yaml` records the template ID/version and project settings. 
 | Generate Mason bricks | — | Yes, with Mason installed | — | — | — |
 | Run/test/build | Make / Go | FVM / Melos / Flutter | npm | npm | Cargo / check scripts |
 
-A dash means the operation has no generator for that template. Foundry does not enforce every workspace/type combination before writing files: choose the matching command explicitly. For web and Rust projects, add modules using the structure documented in their generated README.
+A dash means the operation has no generator for that template. Foundry validates that Go/Flutter generators target the matching workspace and native manifest before writing. Use `--dry-run` to preview paths; planned collisions fail before any files are created. For web and Rust projects, add modules using the structure documented in their generated README.
 
 ## Go workflow
 
@@ -102,7 +102,7 @@ fvm dart run melos run ci
 
 Setup installs/resolves workspace tooling and dependencies. Register each new app/package as required by the root Dart workspace before resolving packages. Run Melos from the workspace root, where it can operate across apps and shared packages. `ci` runs code generation, the quality gate, and brick validation; `check` runs formatting checks, analysis, and tests without code generation or brick validation.
 
-For a workspace with one app, `foundry add feature orders` is a lightweight scaffold option; `foundry add package order_models` creates a shared package skeleton. Resolve dependencies after adding a package and implement/wire the generated code. `add feature` chooses the first app alphabetically under `apps/` with a `pubspec.yaml`. In a multi-app workspace, use the Mason feature brick with an explicit `--app` as above.
+For a workspace with one app, `foundry add feature orders` is a lightweight scaffold option; `foundry add package order_models` creates a shared package skeleton. Resolve dependencies after adding a package and implement/wire the generated code. In a multi-app workspace, use `foundry add feature orders --app customer`, or use the Mason feature brick with explicit `--app` as above. Omitting `--app` is supported only when exactly one app is present; ambiguous targets fail before writing. Preview with `foundry add feature orders --app customer --dry-run`.
 
 `foundry mason feature --app customer --name orders` is an optional shorthand when the `mason` executable on `PATH` uses the correct SDK. The explicit FVM command above guarantees the workspace SDK. These are alternative ways to invoke the brick; run it once per feature.
 

@@ -92,7 +92,7 @@ For a generated Go project, run `gofmt -l ./cmd ./internal ./gen`, `go vet ./...
 | `foundry list` | Print bundled IDs, versions, and descriptions |
 | `foundry template list` | Same bundled listing; `templates` is a command alias and `foundry template` also lists |
 | `foundry info <template>` | Show its canonical ID, version, aliases, and description |
-| `foundry doctor` | Report OS and tool availability on `PATH`; it does not install tools or validate all tool versions |
+| `foundry doctor` | Detect the workspace and check relevant tool/SDK versions; print fixes without installing anything |
 | `foundry new <name> --template <template> [flags]` | Copy the selected bundled foundation and write `.foundry.yaml` |
 
 | Template ID | Accepted short aliases |
@@ -114,6 +114,7 @@ Put the project name before flags: `foundry new portal --template react --destin
 | `--org` | Flutter organization placeholder; native Flutter scaffolding defaults to `com.example` if omitted |
 | `--package` | Flutter package placeholder/metadata token; Mason app variables are configured separately when generating a Mason app |
 | `--no-hooks` | False; when true, skip optional pre/post generation tools |
+| `--dry-run` | False; validate and list generated paths without changing the destination; hooks are skipped |
 | `--force` | False; allow writing into a non-empty destination. Matching template files can be overwritten; unrelated files are retained |
 
 Generation copies embedded source files, removes file suffixes such as `.go.tmpl`, substitutes project tokens, and restores executable shell-script permissions. JavaScript manifests, HTML, configuration and lockfiles receive the project name. Rust manifests, source, tests and lockfiles receive a valid crate identifier; reserved names and digit-leading names are prefixed with `app_`.
@@ -124,7 +125,7 @@ The optional Go hook attempts `go fmt ./...`. Legacy Flutter hooks attempt nativ
 
 ### Extend a project
 
-All `add` commands default to the current folder; `--project <path>` chooses another root. They create source scaffolds and print the remaining implementation/wiring steps. They refuse to overwrite existing files. A command can have written earlier files before a later collision is found; inspect changes after any failure.
+All `add` commands default to the current folder; `--project <path>` chooses another root. They create source scaffolds and print the remaining implementation/wiring steps. They refuse to overwrite existing files. Workspace type and all planned collisions are checked before writes. `--dry-run` validates the same plan and lists paths without changing the project. Handled write failures restore overwritten files and remove files/directories created by the operation; rollback failures are reported.
 
 | Command | Outputs / follow-up |
 | --- | --- |
@@ -134,7 +135,7 @@ All `add` commands default to the current folder; `--project <path>` chooses ano
 | `foundry add usecase <domain> [name]` | Go application use case; omitted name defaults to `execute`; supply the domain/entity/repository and implement behavior |
 | `foundry add proto <name>` | Go protobuf service contract; run `make codegen` and implement/register the service |
 | `foundry add migration <name>` | Next numbered SQL up/down pair; edit SQL and apply it explicitly |
-| `foundry add feature <name>` | Flutter feature domain/application/data/presentation skeleton in the detected app; wire routing and add tests |
+| `foundry add feature <name> [--app <app>]` | Flutter feature domain/application/data/presentation skeleton in the detected app; wire routing and add tests |
 | `foundry add package <name>` | Flutter package skeleton under `packages/`; resolve workspace dependencies afterward |
 
 Examples:
@@ -146,7 +147,7 @@ foundry add usecase orders --project ./backend cancel
 foundry add migration add_order_status --project ./backend
 ```
 
-Flutter `add feature` selects the first app (alphabetical directory order) under apps/ with a pubspec.yaml. For explicit app selection in a multi-app workspace, use the Mason feature brick with `--app <name>`.
+Flutter `add feature` automatically selects the app only when exactly one directory under apps/ has a regular pubspec.yaml. With multiple apps, it lists candidates and requires `--app <directory-name>`. The option is valid only for `add feature`; unknown apps, empty names, and path traversal are rejected before writes. It also works with `--project` and `--dry-run`. Mason bricks retain their separate `--app` arguments.
 
 There are no `add` generators for JavaScript/React/Rust yet. Create feature modules using each template's documented structure.
 
@@ -341,3 +342,26 @@ cargo clippy --locked --offline --all-targets -- -D warnings
 - Go-foundation full local validation is `make ci` in a generated project after installing code-generation tools. Foundry Go tests check generation, not all backend integration behavior. There is no separate automated generated-backend test job in the current workflow.
 
 For template changes, generate a fresh project and run its native gate. Passing Foundry's Go tests alone does not prove a template's runtime code builds. No release script automatically merges a PR or upgrades existing generated projects.
+
+## Version reporting
+
+`foundry version` reports an injected release version when supplied by the release build. For `go install ...@<version>`, it reads the main module version from Go build metadata. Local builds without a module version report `dev`, with the VCS revision and dirty marker when available. Make's explicit `VERSION=dev` remains `dev`; no version is inferred from the bundled template versions.
+
+## Workspace-aware doctor
+
+Run `foundry doctor` from a generated root or subdirectory, or use `foundry doctor --project ./backend` to select an exact root. Foundry metadata takes precedence over native manifests; inconsistent/unsupported metadata produces an error. Without metadata, Go/Cargo/npm manifests and Flutter workspace markers identify the project. An explicit path must identify a supported root.
+
+Go checks the compiler requirement in go.mod; Rust checks Cargo.toml's minimum compiler plus Cargo, Clippy, and rustfmt. Web projects check the foundation's supported Node versions and npm. Flutter checks FVM and compares the cached selected SDK version with .fvmrc without invoking Flutter or installing SDKs. Version probes run from the workspace root with a five-second timeout. Optional Go contract/container tooling is reported separately.
+
+Exit 1 means a required check or workspace detection failed; optional tooling failures do not fail the command. Outside a recognized workspace, doctor shows optional tool availability and returns success. It reports tool readiness, not whether dependencies are installed or application tests pass. Use the project's native quality gate afterward.
+
+## Scaffold safety and previews
+
+```sh
+foundry new backend --template go --dry-run
+foundry add service orders --project ./backend --dry-run
+```
+
+`new` renders into a temporary staging directory, then validates and applies only generated paths. Dry runs remove their staging directory and never run hooks or change the destination. Existing non-empty destinations require `--force`; metadata for another template kind is rejected even with force. Unrelated destination files are not substituted or formatted. SDK/cache output produced by legacy staging hooks is excluded from the resulting project.
+
+`add` requires the matching Go/Flutter workspace and native root manifest. It never overwrites existing files. Both creation and extension reject symlinks at the selected root or inside planned output paths, escaping paths, and file/directory conflicts. Handled write failures trigger rollback, including original contents and permissions for overwritten files. This is not a crash-safe transaction or a lock against concurrent filesystem changes: avoid concurrent edits to the same planned paths, and inspect any reported rollback errors. External generation hooks can affect SDK/package caches outside the destination; use `--no-hooks` for an explicit setup workflow.

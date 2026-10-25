@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -15,18 +16,15 @@ import (
 	"github.com/jabahum/foundry/internal/generator"
 	"github.com/jabahum/foundry/internal/registry"
 	"github.com/jabahum/foundry/internal/upgrade"
+	"github.com/jabahum/foundry/internal/workspace"
 )
-
-// Version is overridden from the release tag at build time. Keeping a useful
-// fallback makes `go install` and local source builds self-describing.
-var Version = "1.2.0"
 
 type App struct{ FS fs.FS }
 
 func (a App) Run(args []string) int {
 	if len(args) > 1 {
 		switch args[0] {
-		case "list", "doctor", "version", "--version", "-v", "help", "--help", "-h":
+		case "list", "version", "--version", "-v", "help", "--help", "-h":
 			fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry help")
 			return 2
 		}
@@ -65,10 +63,9 @@ func (a App) Run(args []string) int {
 		printInfo(t)
 		return 0
 	case "doctor":
-		doctor.Print()
-		return 0
+		return doctorCmd(args[1:])
 	case "version", "--version", "-v":
-		fmt.Println("foundry", Version)
+		fmt.Println("foundry", CurrentVersion())
 		return 0
 	case "help", "--help", "-h":
 		usage()
@@ -80,9 +77,39 @@ func (a App) Run(args []string) int {
 	}
 }
 
+func doctorCmd(args []string) int {
+	f := flag.NewFlagSet("doctor", flag.ContinueOnError)
+	project := f.String("project", "", "workspace root; default searches current directory and parents")
+	if err := f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
+		return 2
+	}
+	if f.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry doctor --help")
+		return 2
+	}
+	var p workspace.Project
+	var err error
+	if *project != "" {
+		p, err = workspace.At(*project)
+	} else {
+		p, err = workspace.Find(".")
+	}
+	if err != nil && (*project != "" || !errors.Is(err, workspace.ErrNotFound)) {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
+	if !doctor.Print(os.Stdout, p, doctor.Inspect(p)) {
+		return 1
+	}
+	return 0
+}
+
 func (a App) interactive() int {
 	r := bufio.NewReader(os.Stdin)
-	fmt.Println("Foundry v" + Version + " — project foundations")
+	fmt.Println("Foundry " + CurrentVersion() + " — project foundations")
 	fmt.Print("Project name: ")
 	name, _ := r.ReadString('\n')
 	name = strings.TrimSpace(name)
@@ -127,6 +154,7 @@ func (a App) newCmd(args []string) int {
 	pkg := f.String("package", "", "Flutter package/app id token")
 	dest := f.String("destination", "", "output directory")
 	force := f.Bool("force", false, "allow generation into non-empty directory")
+	dryRun := f.Bool("dry-run", false, "preview generated paths without changing the destination or running hooks")
 	noHooks := f.Bool("no-hooks", false, "skip post-generation hooks")
 	if err := f.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -161,10 +189,13 @@ func (a App) newCmd(args []string) int {
 		return 1
 	}
 	g := generator.Generator{FS: a.FS}
-	err = g.Generate(selected, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, Force: *force, NoHooks: *noHooks})
+	err = g.Generate(selected, generator.Options{Name: name, Destination: *dest, Module: *module, Org: *org, Package: *pkg, Force: *force, NoHooks: *noHooks, DryRun: *dryRun})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
+	}
+	if *dryRun {
+		return 0
 	}
 	fmt.Println("Template source: bundled files")
 	if selected.Kind == "javascript" || selected.Kind == "react" {
@@ -181,7 +212,8 @@ func addCmd(args []string) int {
   foundry add <service|repository|proto|migration> <name> [--project path]
   foundry add usecase <domain> [name] [--project path]
 Flutter workspace generators:
-  foundry add <feature|package> <name> [--project path]
+  foundry add feature <name> [--app name] [--project path] [--dry-run]
+  foundry add package <name> [--project path] [--dry-run]
 Run from the generated root, or select it with --project. No add generators for JavaScript, React, or Rust.`)
 		return 0
 	}
@@ -193,6 +225,8 @@ Run from the generated root, or select it with --project. No add generators for 
 	f := flag.NewFlagSet("add", flag.ContinueOnError)
 	f.SetOutput(os.Stderr)
 	project := f.String("project", ".", "project root")
+	app := f.String("app", "", "Flutter app directory under apps/ (feature generator only)")
+	dryRun := f.Bool("dry-run", false, "preview planned files without writing them")
 	rest := args[2:]
 	usecase := ""
 	if kind == "usecase" && len(rest) > 0 && !strings.HasPrefix(rest[0], "-") {
@@ -212,6 +246,16 @@ Run from the generated root, or select it with --project. No add generators for 
 		fmt.Fprintln(os.Stderr, "unexpected arguments; use foundry add --help")
 		return 2
 	}
+	appFlag := false
+	f.Visit(func(flag *flag.Flag) {
+		if flag.Name == "app" {
+			appFlag = true
+		}
+	})
+	if appFlag && (kind != "feature" || *app == "") {
+		fmt.Fprintln(os.Stderr, "--app requires a non-empty app name and is only supported by add feature")
+		return 2
+	}
 	root, err := filepath.Abs(*project)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -220,24 +264,24 @@ Run from the generated root, or select it with --project. No add generators for 
 	var result addgen.Result
 	switch kind {
 	case "service", "grpc-service":
-		result, err = addgen.GoService(root, name)
+		result, err = addgen.GoService(root, name, addgen.Options{DryRun: *dryRun})
 	case "repository":
-		result, err = addgen.GoRepository(root, name)
+		result, err = addgen.GoRepository(root, name, addgen.Options{DryRun: *dryRun})
 	case "usecase":
 		domain := name
 		uc := usecase
 		if uc == "" {
 			uc = "execute"
 		}
-		result, err = addgen.GoUsecase(root, domain, uc)
+		result, err = addgen.GoUsecase(root, domain, uc, addgen.Options{DryRun: *dryRun})
 	case "proto":
-		result, err = addgen.GoProto(root, name)
+		result, err = addgen.GoProto(root, name, addgen.Options{DryRun: *dryRun})
 	case "migration":
-		result, err = addgen.GoMigration(root, name)
+		result, err = addgen.GoMigration(root, name, addgen.Options{DryRun: *dryRun})
 	case "feature":
-		result, err = addgen.FlutterFeature(root, name)
+		result, err = addgen.FlutterFeature(root, name, addgen.Options{DryRun: *dryRun, App: *app})
 	case "package":
-		result, err = addgen.FlutterPackage(root, name)
+		result, err = addgen.FlutterPackage(root, name, addgen.Options{DryRun: *dryRun})
 	default:
 		fmt.Fprintf(os.Stderr, "unknown add generator %q\n", kind)
 		return 2
@@ -246,7 +290,11 @@ Run from the generated root, or select it with --project. No add generators for 
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
 	}
-	fmt.Printf("Added %s %q\n", kind, name)
+	if *dryRun {
+		fmt.Printf("Would add %s %q (no files changed)\n", kind, name)
+	} else {
+		fmt.Printf("Added %s %q\n", kind, name)
+	}
 	for _, p := range result.Files {
 		fmt.Println("  +", p)
 	}
@@ -348,7 +396,7 @@ Discover (any directory):
   foundry list                              List bundled templates
   foundry template list                     Alias for list
   foundry info <template>                    Show template details and aliases
-  foundry doctor                            Report tools available on PATH
+  foundry doctor [--project path]           Check workspace tools and SDK versions
   foundry version                            Show executable version
 
 Create (run from the parent directory):
@@ -356,7 +404,7 @@ Create (run from the parent directory):
   foundry new <name> --template go [--module path]
   foundry new <name> --template flutter [--org com.example]
   foundry new <name> --template <vanilla-js|react|rust>
-  Options: --destination path, --version version, --no-hooks, --force
+  Options: --destination path, --version version, --no-hooks, --force, --dry-run
   Run foundry new --help for all creation flags.
 
 Extend Go (generated project root, or --project path):
@@ -367,10 +415,10 @@ Extend Go (generated project root, or --project path):
   foundry add migration <name> [--project path]
 
 Extend Flutter (generated workspace root):
-  foundry add feature <name> [--project path]
+  foundry add feature <name> [--app name] [--project path]
   foundry add package <name> [--project path]
   foundry mason <brick> [args...]             Run mason make from PATH in this directory
-  For multi-app workspaces, select the app with Mason's --app argument.
+  For multi-app workspaces, select the feature target with --app <name>.
   JavaScript, React, and Rust have no foundry add generators yet.
 
 Maintain (any generated project root, or --project path):

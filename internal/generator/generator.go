@@ -11,11 +11,13 @@ import (
 
 	"github.com/jabahum/foundry/internal/config"
 	"github.com/jabahum/foundry/internal/registry"
+	"github.com/jabahum/foundry/internal/scaffold"
+	"github.com/jabahum/foundry/internal/workspace"
 )
 
 type Options struct {
 	Name, Destination, Module, Org, Package string
-	Force, NoHooks                          bool
+	Force, NoHooks, DryRun                  bool
 }
 
 type Generator struct{ FS fs.FS }
@@ -31,14 +33,38 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 	if err != nil {
 		return err
 	}
-	if st, err := os.Stat(dest); err == nil && st.IsDir() {
-		entries, _ := os.ReadDir(dest)
+	if st, err := os.Lstat(dest); err == nil {
+		if !st.IsDir() || st.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("destination must be a directory, not a file or symlink")
+		}
+		entries, err := os.ReadDir(dest)
+		if err != nil {
+			return err
+		}
 		if len(entries) > 0 && !o.Force {
 			return fmt.Errorf("destination %s is not empty; use --force", dest)
 		}
-	}
-	if err := os.MkdirAll(dest, 0o755); err != nil {
+		if _, err := os.Stat(config.Path(dest)); err == nil {
+			p, err := workspace.At(dest)
+			if err != nil {
+				return err
+			}
+			if p.Kind != t.Kind {
+				return fmt.Errorf("destination is a %s workspace, not %s", p.Kind, t.Kind)
+			}
+		}
+	} else if !os.IsNotExist(err) {
 		return err
+	}
+	stage, err := os.MkdirTemp("", "foundry-stage-*")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(stage)
+	output := dest
+	dest = stage
+	if o.DryRun {
+		o.NoHooks = true
 	}
 	if t.Kind == "flutter" && !o.NoHooks {
 		if err := prepareFlutter(dest, o); err != nil {
@@ -68,7 +94,50 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 	if err := config.Write(dest, config.Config{ProjectName: sanitize(o.Name), Template: t.ID, TemplateVersion: t.Version, Kind: t.Kind, Module: o.Module, Org: o.Org, Package: o.Package}); err != nil {
 		return fmt.Errorf("write .foundry.yaml: %w", err)
 	}
-	fmt.Printf("\nCreated %s using %s v%s\n", dest, t.Name, t.Version)
+	plan := map[string]scaffold.File{}
+	if err := filepath.WalkDir(stage, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			switch d.Name() {
+			case ".git", ".dart_tool", ".fvm", ".mason", "node_modules", "target", "build":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if d.Type()&os.ModeSymlink != 0 {
+			return fmt.Errorf("generated output contains a symlink: %s", path)
+		}
+		rel, err := filepath.Rel(stage, path)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		st, err := d.Info()
+		if err != nil {
+			return err
+		}
+		plan[rel] = scaffold.File{Data: data, Mode: st.Mode().Perm()}
+		return nil
+	}); err != nil {
+		return err
+	}
+	paths, err := scaffold.Apply(output, plan, o.Force, o.DryRun)
+	if err != nil {
+		return err
+	}
+	if o.DryRun {
+		fmt.Printf("Would create %s using %s v%s (hooks skipped)\n", output, t.Name, t.Version)
+		for _, path := range paths {
+			fmt.Println("  +", path)
+		}
+		return nil
+	}
+	fmt.Printf("\nCreated %s using %s v%s\n", output, t.Name, t.Version)
 	return nil
 }
 

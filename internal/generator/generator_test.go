@@ -219,3 +219,32 @@ func TestRustTemplateSubstitutesCrateName(t *testing.T) {
 		})
 	}
 }
+
+func TestNewDryRunAndForcePreserveUnrelatedFiles(t *testing.T) {
+	tmpl, err := registry.Find("rust")
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := Generator{FS: foundry.Templates}
+	dest := filepath.Join(t.TempDir(), "project")
+	if err := g.Generate(tmpl, Options{Name: "demo", Destination: dest, DryRun: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Fatal("dry-run created project")
+	}
+	if err := os.MkdirAll(dest, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	unrelated := filepath.Join(dest, "notes.md")
+	if err := os.WriteFile(unrelated, []byte("__PROJECT_NAME__ must stay verbatim"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.Generate(tmpl, Options{Name: "demo", Destination: dest, NoHooks: true, Force: true}); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(unrelated)
+	if err != nil || string(data) != "__PROJECT_NAME__ must stay verbatim" {
+		t.Fatalf("unrelated file changed: %s, %v", data, err)
+	}
+}

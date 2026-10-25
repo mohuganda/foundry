@@ -82,7 +82,8 @@ go build -trimpath -o foundry.exe ./cmd/foundry
 
 | Category | Commands | Where to run |
 | --- | --- | --- |
-| Discover | `help`, `list`, `template list`, `info`, `doctor`, `version` | Any directory |
+| Discover | `help`, `list`, `template list`, `info`, `version` | Any directory |
+| Diagnose | `doctor [--project <root>]` | Detect the current/parent workspace or select an explicit root |
 | Create | `foundry`, `new` | Parent folder of the new project; or specify `--destination` |
 | Extend Go | `add service`, `repository`, `usecase`, `proto`, `migration` | Generated Go root, or select it with `--project` |
 | Extend Flutter | `add feature`, `add package`, `mason` | Generated Flutter workspace root; `add` accepts `--project` |
@@ -172,7 +173,7 @@ Flutter:
 
 ```bash
 cd mediguide
-foundry add feature emergency_guidelines
+foundry add feature emergency_guidelines --app mediguide
 foundry add package foundation_analytics
 ```
 

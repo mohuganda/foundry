@@ -122,3 +122,67 @@ func TestUnexpectedArgumentsAndWriteUpgradeModeAreRejected(t *testing.T) {
 		}
 	}
 }
+
+func TestDoctorHelpAndInvalidProject(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	if code := app.Run([]string{"doctor", "--help"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := app.Run([]string{"doctor", "--project", t.TempDir()}); code != 1 {
+		t.Fatalf("unknown project: %d", code)
+	}
+	if code := app.Run([]string{"doctor", "extra"}); code != 2 {
+		t.Fatal(code)
+	}
+}
+
+func TestCLIDryRunsDoNotWrite(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	root := t.TempDir()
+	dest := filepath.Join(root, "new")
+	if code := app.Run([]string{"new", "demo", "--template", "go", "--destination", dest, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Fatal("new dry-run wrote destination")
+	}
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module acme.org/api\ngo 1.23\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if code := app.Run([]string{"add", "service", "orders", "--project", root, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if _, err := os.Stat(filepath.Join(root, "api")); !os.IsNotExist(err) {
+		t.Fatal("add dry-run wrote source")
+	}
+}
+
+func TestFlutterAppCLISelection(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "pubspec.yaml"), []byte("name: workspace\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, app := range []string{"admin", "customer"} {
+		dir := filepath.Join(root, "apps", app)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "pubspec.yaml"), []byte("name: "+app+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if code := addCmd([]string{"feature", "orders", "--project", root}); code != 1 {
+		t.Fatal(code)
+	}
+	if code := addCmd([]string{"feature", "orders", "--app", "customer", "--project", root, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := addCmd([]string{"feature", "orders", "--project", root, "--app", "customer"}); code != 0 {
+		t.Fatal(code)
+	}
+	for _, kind := range []string{"package", "service", "migration"} {
+		if code := addCmd([]string{kind, "oops", "--project", root, "--app", "customer"}); code != 2 {
+			t.Fatalf("%s accepted --app: %d", kind, code)
+		}
+	}
+}
