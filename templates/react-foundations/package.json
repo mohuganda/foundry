@@ -35,6 +35,8 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
+    "lucide": "1.61.0",
+    "lucide-react": "1.61.0",
     "oidc-client-ts": "3.5.0",
     "react": "19.3.1",
     "react-dom": "19.3.1"

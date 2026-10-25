@@ -15,9 +15,13 @@
   gap: var(--space-small);
 }
 .identity-images img {
+  display: block;
   max-width: 8rem;
-  max-height: 5rem;
+  max-height: 3rem;
   object-fit: contain;
+}
+.identity-images picture {
+  display: block;
 }
 .identity-environment {
   border: var(--border-width) solid var(--color-border);
@@ -175,4 +179,17 @@
 
 .identity-images:empty {
   display: none;
+}
+
+/* Lucide glyphs are decorative: adjacent text names every action and state. */
+.identity-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  vertical-align: -0.2em;
+  stroke-width: 2;
+}
+.button .identity-icon,
+.identity-login-error .identity-icon {
+  margin-inline-end: 0.5rem;
 }

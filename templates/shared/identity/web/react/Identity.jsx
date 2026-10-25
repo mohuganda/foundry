@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CircleAlert, LoaderCircle, LogIn, RotateCcw } from 'lucide-react';
 import login from './login.json';
 import {
   assetURL,
@@ -105,6 +106,7 @@ export function IdentityShell({
 export function IdentityLoading({ message = 'Loading…' }) {
   return (
     <section className="card identity-state">
+      <LoaderCircle className="identity-icon" aria-hidden="true" />
       <h1>Loading</h1>
       <p role="status">{message}</p>
     </section>
@@ -114,6 +116,7 @@ export function IdentityLoading({ message = 'Loading…' }) {
 export function IdentityError({ message = 'Please try again.', onRetry }) {
   return (
     <section className="card identity-state">
+      <CircleAlert className="identity-icon" aria-hidden="true" />
       <h1>Something went wrong</h1>
       <p role="alert">{message}</p>
       <button
@@ -122,6 +125,7 @@ export function IdentityError({ message = 'Please try again.', onRetry }) {
         disabled={!onRetry}
         onClick={onRetry}
       >
+        <RotateCcw className="identity-icon" aria-hidden="true" />
         Try again
       </button>
     </section>
@@ -170,6 +174,7 @@ export function IdentitySignIn({
         <p className="muted">{login.description}</p>
         {error && (
           <p className="identity-login-error" role="alert">
+            <CircleAlert className="identity-icon" aria-hidden="true" />
             {error}
           </p>
         )}
@@ -179,6 +184,11 @@ export function IdentitySignIn({
           disabled={pending || !onSignIn}
           onClick={onSignIn}
         >
+          {pending ? (
+            <LoaderCircle className="identity-icon" aria-hidden="true" />
+          ) : (
+            <LogIn className="identity-icon" aria-hidden="true" />
+          )}
           {pending ? login.pending_action : login.action}
         </button>
         {pending && (
