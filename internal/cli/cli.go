@@ -214,7 +214,14 @@ func addCmd(args []string) int {
 Flutter workspace generators:
   foundry add feature <name> [--app name] [--project path] [--dry-run]
   foundry add package <name> [--project path] [--dry-run]
-Run from the generated root, or select it with --project. No add generators for JavaScript, React, or Rust.`)
+
+Web workspace generators:
+  foundry add feature <name> [--project path] [--dry-run]
+
+Rust workspace generators:
+  foundry add feature <name> [--project path] [--dry-run]
+
+Run from the generated root, or select it with --project. Feature generation detects the workspace kind.`)
 		return 0
 	}
 	if len(args) < 2 {
@@ -279,7 +286,7 @@ Run from the generated root, or select it with --project. No add generators for 
 	case "migration":
 		result, err = addgen.GoMigration(root, name, addgen.Options{DryRun: *dryRun})
 	case "feature":
-		result, err = addgen.FlutterFeature(root, name, addgen.Options{DryRun: *dryRun, App: *app})
+		result, err = addgen.Feature(root, name, addgen.Options{DryRun: *dryRun, App: *app})
 	case "package":
 		result, err = addgen.FlutterPackage(root, name, addgen.Options{DryRun: *dryRun})
 	default:
@@ -419,7 +426,13 @@ Extend Flutter (generated workspace root):
   foundry add package <name> [--project path]
   foundry mason <brick> [args...]             Run mason make from PATH in this directory
   For multi-app workspaces, select the feature target with --app <name>.
-  JavaScript, React, and Rust have no foundry add generators yet.
+
+Extend web (Vanilla JavaScript / React):
+  foundry add feature <name> [--project path] [--dry-run]
+
+Extend Rust:
+  foundry add feature <name> [--project path] [--dry-run]
+  Feature generation detects the selected Flutter/web/Rust workspace.
 
 Maintain (any generated project root, or --project path):
   foundry upgrade [--project path] [--check]  Compare template versions; no files changed

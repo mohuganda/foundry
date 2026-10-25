@@ -4,7 +4,7 @@ Vanilla JavaScript Foundations: a client-side JavaScript application built with 
 
 ## Foundry command scope
 
-This is a generated application root. Use npm scripts here for development, tests, and builds. Add features under `src/features/` using the structure below; Foundry has no `add` generators for this template. Go and Flutter scaffolding commands belong to their respective workspaces.
+This is a generated application root. Use npm scripts here for development, tests, and builds. Run `foundry add feature order-history` here, or append `--project <root>` from another directory. Add `--dry-run` to preview the files. It creates a feature UI, colocated behavior tests, and an integration README under `src/features/order_history/`. Import the feature from a page and replace the starter message boundary with product behavior. Go and Flutter scaffolding commands belong to their respective workspaces.
 
 `foundry upgrade --check` compares the version in `.foundry.yaml` with the installed executable's bundled template; it changes no files. From another directory, use `foundry upgrade --project <root> --check`. Foundry does not run, build, or deploy this application.
 

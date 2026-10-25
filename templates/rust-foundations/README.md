@@ -4,7 +4,7 @@ A Rust 2024 application foundation with a thin executable, reusable library, fea
 
 ## Foundry command scope
 
-This is a generated application root. Use Cargo and the check scripts here for development, tests, and builds. Add features under `src/features/` using the structure below; Foundry has no `add` generators for this template. Go and Flutter scaffolding commands belong to their respective workspaces.
+This is a generated application root. Use Cargo and the check scripts here for development, tests, and builds. Run `foundry add feature order-history` here, or append `--project <root>` from another directory. Add `--dry-run` to preview the files. It creates a domain type, typed errors, an application function, unit tests, and a README under `src/features/order_history/`. Add `pub mod order_history;` to `src/features/mod.rs` to compile the feature and run its tests; then wire it into the application boundary. Go and Flutter scaffolding commands belong to their respective workspaces.
 
 `foundry upgrade --check` compares the version in `.foundry.yaml` with the installed executable's bundled template; it changes no files. From another directory, use `foundry upgrade --project <root> --check`. Foundry does not run, build, or deploy this application.
 

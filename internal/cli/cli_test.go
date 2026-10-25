@@ -186,3 +186,48 @@ func TestFlutterAppCLISelection(t *testing.T) {
 		}
 	}
 }
+
+func TestFeatureDispatchForWebProjects(t *testing.T) {
+	for _, template := range []string{"vanilla-js", "react"} {
+		root := filepath.Join(t.TempDir(), "project")
+		app := App{FS: foundry.Templates}
+		if code := app.Run([]string{"new", "demo", "--template", template, "--destination", root, "--no-hooks"}); code != 0 {
+			t.Fatal(code)
+		}
+		if code := app.Run([]string{"add", "feature", "orders", "--project", root, "--dry-run"}); code != 0 {
+			t.Fatal(code)
+		}
+		if _, err := os.Stat(filepath.Join(root, "src", "features", "orders")); !os.IsNotExist(err) {
+			t.Fatal("dry-run wrote feature")
+		}
+		if code := app.Run([]string{"add", "feature", "orders", "--project", root}); code != 0 {
+			t.Fatal(code)
+		}
+		if _, err := os.Stat(filepath.Join(root, "src", "features", "orders", "README.md")); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestFeatureDispatchForRustProject(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "project")
+	app := App{FS: foundry.Templates}
+	if code := app.Run([]string{"new", "demo", "--template", "rust", "--destination", root, "--no-hooks"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := app.Run([]string{"add", "feature", "order-history", "--project", root, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if code := app.Run([]string{"add", "feature", "order-history", "--project", root}); code != 0 {
+		t.Fatal(code)
+	}
+	if _, err := os.Stat(filepath.Join(root, "src", "features", "order_history", "mod.rs")); err != nil {
+		t.Fatal(err)
+	}
+	if code := app.Run([]string{"add", "feature", "self", "--project", root}); code != 1 {
+		t.Fatal("Rust keyword accepted")
+	}
+	if code := app.Run([]string{"add", "feature", "orders", "--project", root, "--app", "customer"}); code != 1 {
+		t.Fatal("Flutter option accepted for Rust")
+	}
+}

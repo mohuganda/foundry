@@ -135,7 +135,7 @@ All `add` commands default to the current folder; `--project <path>` chooses ano
 | `foundry add usecase <domain> [name]` | Go application use case; omitted name defaults to `execute`; supply the domain/entity/repository and implement behavior |
 | `foundry add proto <name>` | Go protobuf service contract; run `make codegen` and implement/register the service |
 | `foundry add migration <name>` | Next numbered SQL up/down pair; edit SQL and apply it explicitly |
-| `foundry add feature <name> [--app <app>]` | Flutter feature domain/application/data/presentation skeleton in the detected app; wire routing and add tests |
+| `foundry add feature <name> [--app <app>]` | Detect Flutter/Vanilla JS/React/Rust: Flutter creates an app feature slice; web creates UI/tests; Rust creates a domain/service module and tests. Wire/register the feature explicitly |
 | `foundry add package <name>` | Flutter package skeleton under `packages/`; resolve workspace dependencies afterward |
 
 Examples:
@@ -149,7 +149,7 @@ foundry add migration add_order_status --project ./backend
 
 Flutter `add feature` automatically selects the app only when exactly one directory under apps/ has a regular pubspec.yaml. With multiple apps, it lists candidates and requires `--app <directory-name>`. The option is valid only for `add feature`; unknown apps, empty names, and path traversal are rejected before writes. It also works with `--project` and `--dry-run`. Mason bricks retain their separate `--app` arguments.
 
-There are no `add` generators for JavaScript/React/Rust yet. Create feature modules using each template's documented structure.
+`add feature` also supports Vanilla JS and React using the selected workspace kind. Rust workspaces generate a domain/service module and unit tests, then print the module-registration step.
 
 `foundry mason <brick> [arguments...]` runs **`mason make` from PATH** with inherited input/output and arguments. It requires Mason installed and the correct workspace as the current directory. For FVM-managed workspaces the explicit equivalent is `fvm dart pub global run mason_cli:mason make <brick> ...`, which guarantees the selected SDK.
 
@@ -184,7 +184,7 @@ Compatibility aliases remain: `fmt` → `format`, `fmt-check` → `format-check`
 
 ### `scripts/smoke.sh`
 
-Needs a built Foundry executable. It prints version/list, generates Go/Flutter/Vanilla JS/React/Rust into a fresh temporary directory with hooks disabled, checks their manifests and metadata, then adds a Go migration and service. It does not install template dependencies or run generated app tests. The temporary directory is removed on success, failure, or interruption; it does not reuse or delete a fixed `.tmp-smoke` folder.
+Needs a built Foundry executable. It prints version/list, generates Go/Flutter/Vanilla JS/React/Rust into a fresh temporary directory with hooks disabled, checks their manifests and metadata, then adds a Go migration/service and previews/creates web/Rust features. It does not install template dependencies or run generated app tests. The temporary directory is removed on success, failure, or interruption; it does not reuse or delete a fixed `.tmp-smoke` folder.
 
 | Input | Effect |
 | --- | --- |
@@ -364,4 +364,32 @@ foundry add service orders --project ./backend --dry-run
 
 `new` renders into a temporary staging directory, then validates and applies only generated paths. Dry runs remove their staging directory and never run hooks or change the destination. Existing non-empty destinations require `--force`; metadata for another template kind is rejected even with force. Unrelated destination files are not substituted or formatted. SDK/cache output produced by legacy staging hooks is excluded from the resulting project.
 
-`add` requires the matching Go/Flutter workspace and native root manifest. It never overwrites existing files. Both creation and extension reject symlinks at the selected root or inside planned output paths, escaping paths, and file/directory conflicts. Handled write failures trigger rollback, including original contents and permissions for overwritten files. This is not a crash-safe transaction or a lock against concurrent filesystem changes: avoid concurrent edits to the same planned paths, and inspect any reported rollback errors. External generation hooks can affect SDK/package caches outside the destination; use `--no-hooks` for an explicit setup workflow.
+`add` requires the matching workspace kind and native root manifest. It never overwrites existing files. Both creation and extension reject symlinks at the selected root or inside planned output paths, escaping paths, and file/directory conflicts. Handled write failures trigger rollback, including original contents and permissions for overwritten files. This is not a crash-safe transaction or a lock against concurrent filesystem changes: avoid concurrent edits to the same planned paths, and inspect any reported rollback errors. External generation hooks can affect SDK/package caches outside the destination; use `--no-hooks` for an explicit setup workflow.
+
+## Web feature scaffolding
+
+```sh
+foundry add feature order-history --project ./storefront --dry-run
+foundry add feature order-history --project ./storefront
+```
+
+Foundry detects Vanilla JavaScript versus React from project metadata or package.json. Names start with a letter and contain letters/digits with single spaces, hyphens, or underscores separating words (maximum 64 characters). They normalize to snake_case folders and PascalCase exported components/functions. Paths, punctuation, digit-leading names, and Windows-reserved names are rejected. The Flutter-only `--app` flag is not accepted for web workspaces.
+
+Vanilla JS creates `src/features/order_history/order_history.js`, its colocated `.test.js`, and a README. The exported `createOrderHistory` returns `element`, `update(message)`, and `destroy()`. React creates `components/OrderHistory.jsx`, a colocated `.test.jsx`, and a README. Its component accepts a message prop. Both use accessible regions/status text and test independent instances and message updates; Vanilla JS also tests teardown. These are starter UI boundaries to replace with product behavior.
+
+The command prints the import and follow-up steps. Compose the feature from a page, adjust imports if your page has a different depth, and run `npm run format` then `npm run check`. It does not install dependencies, run npm, add routing, or edit existing pages. Planned collisions, dry runs, symlink checks, and rollback use the same scaffold safety rules as other generators.
+
+## Rust feature scaffolding
+
+```sh
+foundry add feature order-history --project ./report-tool --dry-run
+foundry add feature order-history --project ./report-tool
+# Add this declaration to report-tool/src/features/mod.rs:
+# pub mod order_history;
+```
+
+Creates `src/features/order_history/{mod.rs,domain.rs,service.rs,README.md}`. The module exports a validated Value, typed Error, and execute operation; replace these starter rules with product behavior. Unit tests cover whitespace/Unicode input, invalid input, and application error propagation. Names use the same normalized feature-name rules as web scaffolds; Rust keywords (including self, type, async, and gen) are rejected. `--app` belongs only to Flutter.
+
+Registration is explicit: add `pub mod order_history;` to `src/features/mod.rs`, or declare it in the application's existing inline features module. If the project has no features module yet, expose it from the library/application root as well. Call `features::order_history::execute` from the owning boundary. Tests in an unregistered Rust module are not compiled or run.
+
+The generator leaves existing module registries, CLI parsing, Cargo.toml, and Cargo.lock unchanged. After registration and wiring, run `cargo fmt --all` followed by `bash scripts/check.sh` (or `./scripts/check.ps1` on Windows). Foundry does not invoke Cargo or install dependencies. Dry runs, collisions, path/symlink checks, and rollback use the shared scaffold safety behavior.
