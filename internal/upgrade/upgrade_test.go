@@ -7,7 +7,7 @@ import (
 )
 
 func TestCheckUsesBundledVersion(t *testing.T) {
-	for _, version := range []string{"0.9.0", "1.0.0", "2.0.0"} {
+	for _, version := range []string{"0.9.0", "1.0.0", "1.1.0", "2.0.0"} {
 		t.Run(version, func(t *testing.T) {
 			root := t.TempDir()
 			if err := config.Write(root, config.Config{Template: "go-foundations", TemplateVersion: version}); err != nil {
@@ -17,7 +17,7 @@ func TestCheckUsesBundledVersion(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if report.Latest != "1.0.0" || report.Source != "bundled" || report.UpdateAvailable != (version == "0.9.0") {
+			if report.Latest != "1.1.0" || report.Source != "bundled" || report.UpdateAvailable != (version == "0.9.0" || version == "1.0.0") {
 				t.Fatalf("unexpected upgrade report: %#v", report)
 			}
 		})

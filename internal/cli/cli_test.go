@@ -21,7 +21,7 @@ func TestBundledTemplateCommands(t *testing.T) {
 func TestNewUsesOnlyBundledVersion(t *testing.T) {
 	t.Setenv("FOUNDRY_REGISTRY_URL", "http://127.0.0.1:1/registry.json")
 	app := App{FS: foundry.Templates}
-	for _, version := range []string{"", "1.0.0", "99.0.0"} {
+	for _, version := range []string{"", "1.1.0", "99.0.0"} {
 		t.Run(version, func(t *testing.T) {
 			dest := filepath.Join(t.TempDir(), "project")
 			args := []string{"new", "demo", "--template", "go", "--destination", dest, "--no-hooks"}

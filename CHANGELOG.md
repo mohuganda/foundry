@@ -1,22 +1,32 @@
 # Changelog
 
-## Unreleased
+## 1.4.0 - 2026-10-25
 
-- Add Rust feature scaffolds with domain validation, typed errors, application operations, unit tests, explicit registration instructions, and keyword-safe names.
+### Identity and authentication
 
-- Add workspace-dispatched Vanilla JavaScript/React feature scaffolds with colocated tests, integration notes, dry-run support, and safe name/collision checks.
+- Add configurable organisation/Ministry identity across all five templates: application metadata, public links, ownership references, design tokens, assets, report branding and safe identity sync.
+- Bundle the Uganda coat of arms from the official embassy website for the `moh-uganda` profile, keeping the generic profile unbranded and approval metadata configurable.
+- Use sans-serif typography and Lucide interface icons in web, Flutter and the Keycloak theme, with locally bundled assets and documented provenance/licenses.
+- Add configurable OIDC authentication for web, Flutter and Go, with Keycloak-compatible configuration and an isolated development provider fixture. Rust remains a CLI/backend foundation without a graphical sign-in flow.
+- Share a responsive, accessible login design across React, Vanilla JavaScript and Flutter, including pending/error states, and generate a matching Keycloak theme that preserves provider credential/MFA/recovery behavior.
+- Add real Keycloak integration and browser checks, Flutter widget/Mason checks, documented branding configuration and desktop/mobile previews.
 
-- Add explicit Flutter feature app selection with --app, reject ambiguous multi-app targets, and support selection in previews.
+### CLI and generators
 
-- Add new/add dry runs, workspace guards, staged generation, collision/symlink preflight, and rollback of handled scaffold write failures; preserve unrelated content during forced generation.
-
-- Make doctor workspace-aware with scoped tool/version checks, explicit root selection, required/optional status, and actionable remediation.
-
+- Add Rust feature scaffolds with domain validation, typed errors, application operations, tests, explicit registration instructions and keyword-safe names.
+- Add workspace-dispatched Vanilla JavaScript/React feature scaffolds with colocated tests, integration notes, dry-run support and name/collision checks.
+- Add explicit Flutter feature app selection with `--app`, reject ambiguous multi-app targets and support selection in previews.
+- Add new/add dry runs, workspace guards, staged generation, collision/symlink preflight and rollback of handled scaffold write failures; preserve unrelated content during forced generation.
+- Make doctor workspace-aware with scoped tool/version checks, explicit root selection, required/optional status and actionable remediation.
 - Report source-install versions from Go build metadata and identify local development builds without a stale hardcoded release fallback.
 
+### Distribution and compatibility
+
 - Add a Homebrew tap backed by this repository's Formula directory and verified macOS/Linux release archives.
-- Add a non-root Docker image with all five embedded foundations, offline generation tests, and multi-platform GHCR publishing after stable releases.
-- Automate Homebrew version/checksum updates after successful release publication and document distribution usage and maintenance.
+- Add a non-root Docker image with all five embedded foundations, offline generation tests and multi-platform GHCR publishing after stable releases.
+- Automate Homebrew version/checksum updates after release publication and document installation and distribution maintenance.
+- Advance all five bundled template snapshot versions to `1.1.0`. CLI release versions and native project/package versions remain separate.
+- Existing generated projects are independent copies. `foundry upgrade --check` reports newer bundled snapshots without applying changes; identity sync updates derived configuration/assets/provider themes, while existing client components and dependencies require explicit adoption.
 
 ## 1.3.0 - 2026-10-24
 
