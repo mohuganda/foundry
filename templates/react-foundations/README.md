@@ -90,3 +90,12 @@ from the generated root, then run `foundry identity sync` and the native formatt
 and quality gate. Shared layouts and report helpers consume the generated public
 metadata. Ownership references stay in the canonical source; never store secrets
 there. No approved logos, colours, or fonts are supplied.
+
+## Configurable authentication
+
+OIDC is optional. Create/edit settings with `foundry auth example > oidc.json`,
+validate using `foundry auth validate --file oidc.json --template react`, then pass
+`--auth oidc --auth-config oidc.json` during creation. Generated `auth/README.md`
+covers enabling/disabling authentication, callback setup, provider compatibility,
+and local Keycloak tests. Edit `auth/auth.json` and run `foundry auth configure`
+from the root to update bindings, then format, test, and rebuild.

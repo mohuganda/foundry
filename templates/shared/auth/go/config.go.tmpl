@@ -1,0 +1,25 @@
+// Package authconfig embeds public authentication defaults. Runtime environment overrides win.
+package authconfig
+
+import (
+	_ "embed"
+	"encoding/json"
+)
+
+//go:embed config.json
+var data []byte
+
+type Config struct {
+	Mode         string `json:"mode"`
+	Issuer       string `json:"issuer"`
+	Audience     string `json:"audience"`
+	TokenProfile string `json:"token_profile"`
+}
+
+func Load() Config {
+	var c Config
+	if err := json.Unmarshal(data, &c); err != nil {
+		panic("invalid generated auth configuration")
+	}
+	return c
+}

@@ -3,19 +3,33 @@ package oidc
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 
 	coreoidc "github.com/coreos/go-oidc/v3/oidc"
+	"github.com/golang-jwt/jwt/v5"
 	auth "go-foundations/internal/domain/auth"
 )
 
-type Verifier struct{ verifier *coreoidc.IDTokenVerifier }
+type Verifier struct {
+	verifier        *coreoidc.IDTokenVerifier
+	issuer, profile string
+}
 
-func New(ctx context.Context, issuer, clientID string) (*Verifier, error) {
+// New configures access-token verification, never an interactive login client.
+func New(ctx context.Context, issuer, audience, profile string) (*Verifier, error) {
+	u, e := url.Parse(issuer)
+	if e != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || audience == "" {
+		return nil, fmt.Errorf("OIDC requires HTTPS issuer and API audience")
+	}
+	if profile != "keycloak" && profile != "rfc9068" {
+		return nil, fmt.Errorf("unsupported OIDC token profile")
+	}
 	provider, err := coreoidc.NewProvider(ctx, issuer)
 	if err != nil {
 		return nil, err
 	}
-	return &Verifier{verifier: provider.Verifier(&coreoidc.Config{ClientID: clientID})}, nil
+	return &Verifier{verifier: provider.Verifier(&coreoidc.Config{ClientID: audience, SupportedSigningAlgs: []string{"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"}}), issuer: issuer, profile: profile}, nil
 }
 func (v *Verifier) Verify(ctx context.Context, raw string) (*auth.Identity, error) {
 	t, err := v.verifier.Verify(ctx, raw)
@@ -25,9 +39,29 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*auth.Identity, erro
 	var c struct {
 		Email    string `json:"email"`
 		Username string `json:"preferred_username"`
+		Type     string `json:"typ"`
 	}
-	if err := t.Claims(&c); err != nil {
-		return nil, fmt.Errorf("parse oidc claims: %w", err)
+	if err = t.Claims(&c); err != nil {
+		return nil, fmt.Errorf("parse OIDC claims: %w", err)
 	}
-	return &auth.Identity{UserID: t.Subject, Username: c.Username, Email: c.Email, Provider: "oidc"}, nil
+	if t.Subject == "" {
+		return nil, fmt.Errorf("OIDC subject is required")
+	}
+	// These checks run only after signature, issuer, audience and expiry verification.
+	switch v.profile {
+	case "keycloak":
+		if c.Type != "Bearer" {
+			return nil, fmt.Errorf("not a Keycloak access token")
+		}
+	case "rfc9068":
+		parsed, _, e := jwt.NewParser().ParseUnverified(raw, jwt.MapClaims{})
+		if e != nil {
+			return nil, e
+		}
+		typ, _ := parsed.Header["typ"].(string)
+		if !strings.EqualFold(typ, "at+jwt") && !strings.EqualFold(typ, "application/at+jwt") {
+			return nil, fmt.Errorf("not an RFC9068 access token")
+		}
+	}
+	return &auth.Identity{UserID: t.Subject, Username: c.Username, Email: c.Email, Provider: "oidc", Issuer: v.issuer}, nil
 }

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jabahum/foundry/internal/authconfig"
 	"github.com/jabahum/foundry/internal/config"
 	"github.com/jabahum/foundry/internal/identity"
 	"github.com/jabahum/foundry/internal/registry"
@@ -19,6 +20,7 @@ import (
 type Options struct {
 	Name, Destination, Module, Org, Package string
 	Profile, IdentityFile                   string
+	Auth, AuthFile                          string
 	Force, NoHooks, DryRun                  bool
 }
 
@@ -71,6 +73,17 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 			return err
 		}
 	}
+	var authentication authconfig.Config
+	_, authErr := fs.Stat(g.FS, "templates/shared/auth")
+	withAuth := authErr == nil
+	if withAuth {
+		authentication, err = authconfig.Resolve(o.Auth, o.AuthFile, t.Kind)
+		if err != nil {
+			return err
+		}
+	} else if o.Auth != "" || o.AuthFile != "" {
+		return fmt.Errorf("authentication support is not bundled")
+	}
 	stage, err := os.MkdirTemp("", "foundry-stage-*")
 	if err != nil {
 		return err
@@ -122,6 +135,30 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 						return err
 					}
 				}
+			}
+		}
+	}
+	if withAuth {
+		files, err := authconfig.Render(g.FS, authentication, t.Kind)
+		if err != nil {
+			return err
+		}
+		readme, err := fs.ReadFile(g.FS, "templates/shared/auth/README.md")
+		if err != nil {
+			return err
+		}
+		files[filepath.FromSlash("auth/README.md")] = scaffold.File{Data: readme, Mode: 0644}
+		if _, err = scaffold.Apply(stage, files, true, false); err != nil {
+			return err
+		}
+		if t.Kind != "rust" {
+			if err := copyTree(g.FS, "templates/shared/auth/dev", filepath.Join(stage, "auth/dev")); err != nil {
+				return err
+			}
+		}
+		if t.Kind == "javascript" || t.Kind == "react" {
+			if err := copyTree(g.FS, "templates/shared/auth/web", filepath.Join(stage, "src/shared/auth")); err != nil {
+				return err
 			}
 		}
 	}
@@ -190,7 +227,7 @@ func copyTree(src fs.FS, root, dst string) error {
 			return err
 		}
 		if rel == "." {
-			return nil
+			return os.MkdirAll(dst, 0o755)
 		}
 		if !d.IsDir() {
 			rel = strings.TrimSuffix(rel, ".tmpl")

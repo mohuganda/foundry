@@ -51,4 +51,5 @@ import "embed"
 //go:embed templates/rust-foundations/.gitignore templates/rust-foundations/.editorconfig templates/rust-foundations/.cargo
 //go:embed all:templates/flutter_foundations/packages/foundation_identity/assets
 //go:embed all:templates/shared/identity
+//go:embed all:templates/shared/auth
 var Templates embed.FS

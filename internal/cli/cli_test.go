@@ -271,3 +271,45 @@ func TestIdentityGenerationAndSync(t *testing.T) {
 		t.Fatal(code)
 	}
 }
+
+func TestConfigurableAuthentication(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	root := filepath.Join(t.TempDir(), "portal")
+	if code := app.Run([]string{"new", "portal", "--template", "react", "--destination", root, "--no-hooks"}); code != 0 {
+		t.Fatal(code)
+	}
+	source := filepath.Join(root, "auth", "auth.json")
+	before, _ := os.ReadFile(source)
+	if !strings.Contains(string(before), `"mode": "none"`) {
+		t.Fatal("authentication enabled by default")
+	}
+	input := filepath.Join(t.TempDir(), "auth.json")
+	data := `{"mode":"oidc","issuer":"https://auth.example.org/realms/test","audience":"api","web":{"client_id":"web","redirect_uri":"https://portal.example.org/auth/callback","post_logout_redirect_uri":"https://portal.example.org/auth/signed-out"}}`
+	if err := os.WriteFile(input, []byte(data), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if code := app.Run([]string{"auth", "configure", "--project", root, "--file", input, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	unchanged, _ := os.ReadFile(source)
+	if string(before) != string(unchanged) {
+		t.Fatal("dry run changed configuration")
+	}
+	if code := app.Run([]string{"auth", "configure", "--project", root, "--file", input}); code != 0 {
+		t.Fatal(code)
+	}
+	public, _ := os.ReadFile(filepath.Join(root, "src/shared/auth/config.json"))
+	if !strings.Contains(string(public), `"mode": "oidc"`) {
+		t.Fatal("OIDC not configured")
+	}
+	if code := app.Run([]string{"auth", "validate", "--file", input, "--template", "react"}); code != 0 {
+		t.Fatal(code)
+	}
+	rust := filepath.Join(t.TempDir(), "rust")
+	if code := app.Run([]string{"new", "tool", "--template", "rust", "--auth-config", input, "--destination", rust, "--no-hooks"}); code == 0 {
+		t.Fatal("claimed Rust auth support")
+	}
+	if _, err := os.Stat(rust); !os.IsNotExist(err) {
+		t.Fatal("unsupported auth wrote destination")
+	}
+}

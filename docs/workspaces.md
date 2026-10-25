@@ -198,3 +198,11 @@ Edit the generated `identity/identity.json`, preview with
 formatter/quality gate. See the [identity guide](identity.md) for configuration, shared
 layouts, report branding, public metadata, and ownership references. Official
 logos/fonts/colours are not bundled; visual defaults are neutral and pending approval.
+
+## Optional authentication
+
+Go, React, Vanilla JS, and native Flutter support configurable OIDC authentication.
+Generate an example with `foundry auth example > oidc.json`, edit and validate it, then
+create with `--auth oidc --auth-config oidc.json`. Authentication remains disabled by
+default in frontends; Go retains local JWT. See the [authentication guide](authentication.md) for
+provider configuration, Keycloak development setup, and platform limitations.

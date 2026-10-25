@@ -49,11 +49,11 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*user.Us
 	}
 	return nil, user.ErrNotFound
 }
-func (r *UserRepository) GetByExternalIdentity(ctx context.Context, provider, subject string) (*user.User, error) {
+func (r *UserRepository) GetByExternalIdentity(ctx context.Context, provider, issuer, subject string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, u := range r.users {
-		if u.AuthProvider == provider && u.ExternalSubject == subject {
+		if u.AuthProvider == provider && u.ExternalIssuer == issuer && u.ExternalSubject == subject {
 			return clone(u), nil
 		}
 	}

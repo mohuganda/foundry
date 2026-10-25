@@ -12,3 +12,7 @@ final authServiceProvider = Provider<AuthService>(
 final apiClientProvider = Provider<ApiClient>(
   (ref) => throw UnimplementedError('Override in bootstrap'),
 );
+
+final oidcAuthProvider = Provider<OidcAuth>(
+  (ref) => throw UnimplementedError('Override in bootstrap'),
+);

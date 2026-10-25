@@ -15,17 +15,20 @@ Future<Widget> bootstrap() async {
   final tokenStore = SecureTokenStore(secureStorage);
   final authDio = Dio(BaseOptions(baseUrl: env.authBaseUrl));
   final authService = AuthService(authDio: authDio, tokenStore: tokenStore);
+  final oidcAuth = OidcAuth(config: OidcConfig.generated());
+  await oidcAuth.initialize();
   final apiClient = ApiClient(
     baseUrl: env.apiBaseUrl,
-    tokenProvider: authService,
+    tokenProvider: oidcAuth.config.enabled ? oidcAuth : authService,
     enableLogs: env.enableHttpLogs,
   );
   return ProviderScope(
     overrides: [
       environmentProvider.overrideWithValue(env),
       authServiceProvider.overrideWithValue(authService),
+      oidcAuthProvider.overrideWithValue(oidcAuth),
       apiClientProvider.overrideWithValue(apiClient),
     ],
-    child: const AppRoot(),
+    child: AppRoot(auth: oidcAuth),
   );
 }

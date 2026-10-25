@@ -34,7 +34,7 @@ services:
       DOCS_ENABLED: "true"
       METRICS_ADDR: :9090
       DATABASE_URL: postgres://grpc:grpc@postgres:5432/go_foundation?sslmode=disable
-      AUTH_LOCAL_ENABLED: "true"
+      AUTH_LOCAL_ENABLED: ${AUTH_LOCAL_ENABLED:-}
       JWT_ISSUER: go-foundation
       JWT_AUDIENCE: grpc-api
       JWT_ACCESS_TOKEN_TTL: 15m
@@ -44,7 +44,10 @@ services:
       BOOTSTRAP_ADMIN_EMAIL: admin@example.com
       BOOTSTRAP_ADMIN_PASSWORD: ChangeMe123!
       BOOTSTRAP_ADMIN_NAME: Starter Admin
-      OIDC_ENABLED: "false"
+      OIDC_ENABLED: ${OIDC_ENABLED:-}
+      OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+      OIDC_TOKEN_PROFILE: ${OIDC_TOKEN_PROFILE:-}
       IDEMPOTENCY_ENABLED: "true"
       IDEMPOTENCY_TTL: 24h
       IDEMPOTENCY_LOCK_TIMEOUT: 30s

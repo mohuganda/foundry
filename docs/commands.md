@@ -14,6 +14,7 @@ The [workspace guide](workspaces.md) explains which commands apply to each works
 | Creation | Parent folder: interactive generation or `new` | [Creation flags and delivery](#inspect-and-generate) |
 | Go scaffolding | Generated Go root: service, repository, use case, proto, migration | [Extend a project](#extend-a-project) |
 | Flutter scaffolding | Workspace root: feature, package, Mason bricks | [Extend a project](#extend-a-project) |
+| Authentication | Generated Go/web/Flutter roots: optional OIDC configuration and provider setup | [Authentication guide](authentication.md) |
 | Identity | Generated roots: organisation profiles, public branding, document metadata | [Identity guide](identity.md) |
 | Maintenance | Generated roots: read-only template version comparison | [Maintenance and errors](#maintenance-and-errors) |
 | Workspace development | Native tools for setup, run, format, lint, test, build, clean | Sections 5–8 below |
@@ -111,6 +112,8 @@ Put the project name before flags: `foundry new portal --template react --destin
 | `--template` | Required ID or alias |
 | `--version` | Bundled version by default; if specified, it must equal that bundled version. It does not download another release |
 | `--destination` | Project name as output path; an explicit path changes the output location |
+| `--auth` | `none`; `oidc` enables configured OIDC for Go, web or native Flutter |
+| `--auth-config` | Public JSON settings; required issuer/audience/client callbacks when enabling OIDC |
 | `--profile` | `generic`; `moh-uganda` supplies Ministry organisation details with neutral visual defaults |
 | `--identity` | Optional JSON override file; image paths are relative to this file |
 | `--module` | Go module override; otherwise the normalized project name is used |
@@ -396,3 +399,15 @@ Creates `src/features/order_history/{mod.rs,domain.rs,service.rs,README.md}`. Th
 Registration is explicit: add `pub mod order_history;` to `src/features/mod.rs`, or declare it in the application's existing inline features module. If the project has no features module yet, expose it from the library/application root as well. Call `features::order_history::execute` from the owning boundary. Tests in an unregistered Rust module are not compiled or run.
 
 The generator leaves existing module registries, CLI parsing, Cargo.toml, and Cargo.lock unchanged. After registration and wiring, run `cargo fmt --all` followed by `bash scripts/check.sh` (or `./scripts/check.ps1` on Windows). Foundry does not invoke Cargo or install dependencies. Dry runs, collisions, path/symlink checks, and rollback use the shared scaffold safety behavior.
+
+## Configurable authentication
+
+`foundry auth example` prints non-secret OIDC settings for customization.
+`foundry auth validate --file oidc.json --template react` validates a target workspace
+without contacting the provider. Use go, react, vanilla-js, or flutter as the target.
+`foundry auth configure --project ./portal --file oidc.json --dry-run` previews changes;
+remove --dry-run to write canonical configuration and generated bindings. Without
+--file, configure reads the project's auth/auth.json. Formatting and rebuilds are
+explicit. It never provisions a provider, installs dependencies, or rewrites app
+integration source. See [authentication](authentication.md) for platform setup,
+security boundaries, migration, environment overrides, and provider integration tests.

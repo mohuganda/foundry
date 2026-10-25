@@ -16,6 +16,6 @@ type Repository interface {
 	Create(context.Context, *User) error
 	GetByID(context.Context, string) (*User, error)
 	GetByEmail(context.Context, string) (*User, error)
-	GetByExternalIdentity(context.Context, string, string) (*User, error)
+	GetByExternalIdentity(context.Context, string, string, string) (*User, error)
 	List(context.Context, ListFilter) ([]*User, error)
 }
