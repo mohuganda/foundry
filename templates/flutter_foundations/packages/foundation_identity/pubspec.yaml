@@ -1,0 +1,16 @@
+name: foundation_identity
+publish_to: none
+resolution: workspace
+version: 0.1.0
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_svg: ^2.2.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+flutter:
+  assets:
+    - assets/

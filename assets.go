@@ -49,4 +49,6 @@ import "embed"
 //go:embed templates/rust-foundations/src templates/rust-foundations/tests templates/rust-foundations/scripts templates/rust-foundations/Cargo.*
 //go:embed templates/rust-foundations/rust-toolchain.toml templates/rust-foundations/README.md
 //go:embed templates/rust-foundations/.gitignore templates/rust-foundations/.editorconfig templates/rust-foundations/.cargo
+//go:embed all:templates/flutter_foundations/packages/foundation_identity/assets
+//go:embed all:templates/shared/identity
 var Templates embed.FS

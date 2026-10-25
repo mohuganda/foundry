@@ -21,3 +21,5 @@ android/app/google-services.json
 .idea/
 .vscode/
 mason-lock.json
+
+.flutter-plugins-dependencies

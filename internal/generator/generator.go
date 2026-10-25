@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jabahum/foundry/internal/config"
+	"github.com/jabahum/foundry/internal/identity"
 	"github.com/jabahum/foundry/internal/registry"
 	"github.com/jabahum/foundry/internal/scaffold"
 	"github.com/jabahum/foundry/internal/workspace"
@@ -17,6 +18,7 @@ import (
 
 type Options struct {
 	Name, Destination, Module, Org, Package string
+	Profile, IdentityFile                   string
 	Force, NoHooks, DryRun                  bool
 }
 
@@ -56,6 +58,19 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 	} else if !os.IsNotExist(err) {
 		return err
 	}
+	_, sharedErr := fs.Stat(g.FS, "templates/shared/identity")
+	withIdentity := sharedErr == nil
+	if !withIdentity && (o.Profile != "" || o.IdentityFile != "") {
+		return fmt.Errorf("identity support is not bundled in this generator")
+	}
+	var identityConfig identity.Config
+	var identityAssets map[string][]byte
+	if withIdentity {
+		identityConfig, identityAssets, err = identity.Resolve(o.Profile, o.IdentityFile, o.Name)
+		if err != nil {
+			return err
+		}
+	}
 	stage, err := os.MkdirTemp("", "foundry-stage-*")
 	if err != nil {
 		return err
@@ -85,6 +100,30 @@ func (g Generator) Generate(t registry.Template, o Options) error {
 	}
 	if err := replaceText(dest, vars); err != nil {
 		return err
+	}
+	if withIdentity {
+		readme, err := fs.ReadFile(g.FS, "templates/shared/identity/README.md")
+		if err != nil {
+			return err
+		}
+		files, err := identity.Render(g.FS, identityConfig, identityAssets, t.Kind)
+		if err != nil {
+			return err
+		}
+		files[filepath.FromSlash("identity/README.md")] = scaffold.File{Data: readme, Mode: 0o644}
+		if _, err := scaffold.Apply(stage, files, true, false); err != nil {
+			return err
+		}
+		if t.Kind == "javascript" || t.Kind == "react" {
+			for _, dir := range []string{"common", t.Kind} {
+				path := "templates/shared/identity/web/" + dir
+				if _, err := fs.Stat(g.FS, path); err == nil {
+					if err := copyTree(g.FS, path, filepath.Join(stage, "src", "shared", "identity")); err != nil {
+						return err
+					}
+				}
+			}
+		}
 	}
 	if !o.NoHooks {
 		if err := postHooks(t, dest, o); err != nil {
