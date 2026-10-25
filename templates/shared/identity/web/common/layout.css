@@ -1,0 +1,71 @@
+.identity-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-medium);
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-block: var(--space-large);
+}
+.identity-header p {
+  margin-block: 0.25rem;
+}
+.identity-images {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-small);
+}
+.identity-images img {
+  max-width: 8rem;
+  max-height: 5rem;
+  object-fit: contain;
+}
+.identity-environment {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+.identity-shell nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-medium);
+  padding-block: var(--space-small);
+}
+.identity-shell a {
+  color: var(--color-accent);
+  text-underline-offset: 0.2em;
+}
+.identity-state {
+  margin-block: var(--space-large);
+}
+.identity-report-header {
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-block: var(--space-medium);
+  break-inside: avoid;
+}
+.identity-report-header p {
+  margin-block: 0.25rem;
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --color-background: #fff;
+    --color-surface: #fff;
+    --color-text: #000;
+    --color-muted: #333;
+  }
+  .skip-link,
+  .identity-shell > .identity-header,
+  .identity-shell > nav,
+  .identity-footer,
+  .identity-environment {
+    display: none;
+  }
+  .identity-shell {
+    width: 100%;
+    padding: 0;
+  }
+  a {
+    color: inherit;
+  }
+}

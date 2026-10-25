@@ -1,0 +1,63 @@
+import { expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { identity } from './index.js';
+import {
+  IdentityShell,
+  IdentitySignIn,
+  IdentityLoading,
+  IdentityError,
+  IdentityReportHeader,
+} from './Identity.jsx';
+
+it('supports missing or broken logos while retaining organisation identity', () => {
+  const profile = structuredClone(identity);
+  profile.organisation.name = 'Ministry of Health';
+  profile.branding.assets.logo_light = '/branding/assets/logo_light.svg';
+  profile.application.environment = 'production';
+  const { container } = render(
+    <IdentityShell profile={profile}>
+      <h1>Dashboard</h1>
+    </IdentityShell>,
+  );
+  fireEvent.error(screen.getByRole('img', { name: 'Ministry of Health logo' }));
+  expect(screen.queryByRole('img')).toBeNull();
+  expect(screen.getByRole('banner')).toHaveTextContent('Ministry of Health');
+  expect(screen.getByRole('main')).toContainElement(
+    screen.getByRole('heading', { name: 'Dashboard' }),
+  );
+  expect(container.querySelector('.identity-environment')).toBeNull();
+});
+
+it('connects sign-in and retry to application callbacks', async () => {
+  const signIn = vi.fn();
+  const retry = vi.fn();
+  render(
+    <>
+      <IdentitySignIn onSignIn={signIn} />
+      <IdentityError message="Offline" onRetry={retry} />
+    </>,
+  );
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Continue' }));
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Try again' }));
+  expect(signIn).toHaveBeenCalledTimes(1);
+  expect(retry).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('alert')).toHaveTextContent('Offline');
+});
+
+it('provides loading status and explicit report metadata', () => {
+  render(
+    <>
+      <IdentityLoading message="Loading records" />
+      <IdentityReportHeader title="Summary" version="3" issuedOn="2026-10-25" />
+    </>,
+  );
+  expect(screen.getByRole('status')).toHaveTextContent('Loading records');
+  expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+  expect(screen.getByText('Version: 3')).toBeInTheDocument();
+  expect(screen.getByText('Date: 2026-10-25')).toBeInTheDocument();
+});
