@@ -70,7 +70,7 @@ jobs:
           cache: npm
           cache-dependency-path: templates/${{ matrix.template }}-foundations/package-lock.json
       - name: Generate the bundled template
-        run: go run ./cmd/foundry new web-check --template ${{ matrix.template }} --destination "$RUNNER_TEMP/foundry-web" --no-hooks
+        run: go run ./cmd/foundry new web-check --template ${{ matrix.template }} --profile moh-uganda --destination "$RUNNER_TEMP/foundry-web" --no-hooks
       - name: Scaffold and validate a web feature
         run: go run ./cmd/foundry add feature order-history --project "$RUNNER_TEMP/foundry-web"
       - run: npm ci
@@ -102,7 +102,7 @@ jobs:
       - name: Install Rust tooling
         run: rustup toolchain install ${{ matrix.toolchain }} --profile minimal --component rustfmt --component clippy
       - name: Generate the bundled template
-        run: go run ./cmd/foundry new rust-check --template rust --destination "${{ runner.temp }}/foundry-rust" --no-hooks
+        run: go run ./cmd/foundry new rust-check --template rust --profile moh-uganda --destination "${{ runner.temp }}/foundry-rust" --no-hooks
       - name: Scaffold and register a Rust feature
         shell: bash
         run: |
@@ -117,6 +117,48 @@ jobs:
         shell: pwsh
         run: ./scripts/check.ps1
         working-directory: ${{ runner.temp }}/foundry-rust
+
+  go-template:
+    name: Generated Go identity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: true
+      - run: go run ./cmd/foundry new moh-backend --template go --profile moh-uganda --destination "$RUNNER_TEMP/foundry-go" --no-hooks
+      - run: go test ./...
+        working-directory: ${{ runner.temp }}/foundry-go
+
+  flutter-template:
+    name: Flutter identity and Mason integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: true
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: templates/flutter_foundations/.fvmrc
+          channel: stable
+          cache: true
+      - run: go run ./cmd/foundry new moh-flutter --template flutter --profile moh-uganda --destination "$RUNNER_TEMP/foundry-flutter" --no-hooks
+      - name: Connect pinned SDK and activate Mason
+        run: |
+          mkdir -p "$RUNNER_TEMP/foundry-flutter/.fvm"
+          ln -s "$FLUTTER_ROOT" "$RUNNER_TEMP/foundry-flutter/.fvm/flutter_sdk"
+          dart pub global activate mason_cli
+      - name: Validate generated identity package and application bricks
+        working-directory: ${{ runner.temp }}/foundry-flutter
+        run: |
+          dart pub get
+          dart format --output=none --set-exit-if-changed packages/foundation_identity
+          dart analyze packages/foundation_identity
+          flutter test --no-pub packages/foundation_identity/test
+          bash scripts/validate_bricks.sh
 
   docker:
     name: Docker distribution

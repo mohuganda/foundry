@@ -1,4 +1,6 @@
 @import './tokens.css';
+@import '../identity/tokens.css';
+@import '../identity/layout.css';
 
 * {
   box-sizing: border-box;
@@ -8,7 +10,8 @@ body {
   min-width: 20rem;
   background: var(--color-background);
   color: var(--color-text);
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-family);
+  font-size: var(--font-size);
   line-height: 1.6;
 }
 button,
@@ -29,7 +32,7 @@ button {
   top: -6rem;
   left: 1rem;
   padding: 0.75rem;
-  background: white;
+  background: var(--color-surface);
   color: var(--color-text);
 }
 .skip-link:focus {
@@ -87,7 +90,7 @@ p {
   padding: 0.65rem 1.15rem;
   border: 1px solid var(--color-accent);
   border-radius: 0.5rem;
-  color: white;
+  color: var(--color-on-primary);
   background: var(--color-accent);
   font-weight: 600;
 }

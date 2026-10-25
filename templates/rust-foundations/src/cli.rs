@@ -50,11 +50,12 @@ pub fn run(
     let message = match args.as_slice() {
         [] | ["--help"] | ["-h"] | ["greet", "--help"] => {
             format!(
-                "Usage: {} greet <name>\n       {} --help",
+                "Usage: {} greet <name>\n       {} --help\n       identity (public application metadata)",
                 env!("CARGO_PKG_NAME"),
                 env!("CARGO_PKG_NAME")
             )
         }
+        ["identity"] => crate::identity::PUBLIC_JSON.to_owned(),
         ["greet", name] if !name.starts_with('-') => greet(name).map_err(CliError::InvalidName)?,
         _ => return Err(CliError::Usage),
     };

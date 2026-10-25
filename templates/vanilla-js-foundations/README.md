@@ -79,3 +79,14 @@ Run npm commands from this project's root. The same scripts are available in the
 The cleanup script resolves paths relative to its own location and preserves source, node_modules and package-lock.json. All npm scripts work on Windows as well as POSIX platforms. Use npm install only for intentional dependency changes, commit the resulting lockfile, then run check. npm ci installs dependencies; it is separate from the quality gate.
 
 The development/preview processes keep running until stopped. Build/check write dist/ but do not deploy. VITE_ values are public and applied at dev startup/build time, so rebuild after changing deployed configuration. Generation from Foundry remains offline; initial dependency installation may require npm registry access.
+
+## Organisation identity
+
+Generate with `foundry new portal --template vanilla-js --profile moh-uganda` to use
+Ministry organisation details. Add `--identity ./moh.json` for programme-specific
+settings. Every generated project contains `identity/identity.json` and
+`identity/README.md`. Edit the JSON, preview with `foundry identity sync --dry-run`
+from the generated root, then run `foundry identity sync` and the native formatter
+and quality gate. Shared layouts and report helpers consume the generated public
+metadata. Ownership references stay in the canonical source; never store secrets
+there. No approved logos, colours, or fonts are supplied.

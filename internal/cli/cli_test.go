@@ -231,3 +231,43 @@ func TestFeatureDispatchForRustProject(t *testing.T) {
 		t.Fatal("Flutter option accepted for Rust")
 	}
 }
+
+func TestIdentityGenerationAndSync(t *testing.T) {
+	app := App{FS: foundry.Templates}
+	root := filepath.Join(t.TempDir(), "portal")
+	if code := app.Run([]string{"new", "Portal", "--template", "react", "--profile", "moh-uganda", "--destination", root, "--no-hooks"}); code != 0 {
+		t.Fatal(code)
+	}
+	canonical := filepath.Join(root, "identity", "identity.json")
+	data, err := os.ReadFile(canonical)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "Ministry of Health") {
+		t.Fatal("profile not applied")
+	}
+	data = []byte(strings.Replace(string(data), `"name": "Portal"`, `"name": "Changed Portal"`, 1))
+	if err := os.WriteFile(canonical, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	public := filepath.Join(root, "src", "shared", "identity", "config.json")
+	before, err := os.ReadFile(public)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code := app.Run([]string{"identity", "sync", "--project", root, "--dry-run"}); code != 0 {
+		t.Fatal(code)
+	}
+	if after, _ := os.ReadFile(public); string(after) != string(before) {
+		t.Fatal("dry-run wrote bindings")
+	}
+	if code := app.Run([]string{"identity", "sync", "--project", root}); code != 0 {
+		t.Fatal(code)
+	}
+	if after, _ := os.ReadFile(public); !strings.Contains(string(after), "Changed Portal") {
+		t.Fatal("sync did not update bindings")
+	}
+	if code := app.Run([]string{"identity", "validate", "--file", canonical}); code != 0 {
+		t.Fatal(code)
+	}
+}

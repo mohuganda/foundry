@@ -1,0 +1,60 @@
+// Package identity exposes public application identity and report metadata.
+package identity
+
+import (
+	_ "embed"
+	"encoding/json"
+)
+
+//go:embed public.json
+var data []byte
+
+type Organisation struct {
+	Name string `json:"name"`
+	Country string `json:"country"`
+	ShortName string `json:"short_name"`
+	Website string `json:"website"`
+}
+type Application struct {
+	Name string `json:"name"`
+	Description string `json:"description"`
+	Department string `json:"department"`
+	Programme string `json:"programme"`
+	SupportEmail string `json:"support_email"`
+	Environment string `json:"environment"`
+}
+type Documents struct {
+	TitlePrefix string `json:"title_prefix"`
+	FooterText string `json:"footer_text"`
+	DefaultVersion string `json:"default_version"`
+	DateFormat string `json:"date_format"`
+}
+type Profile struct {
+	Schema int `json:"schema"`
+	Organisation Organisation `json:"organisation"`
+	Application Application `json:"application"`
+	Documents Documents `json:"documents"`
+	Branding json.RawMessage `json:"branding"`
+	Links map[string]string `json:"links"`
+	Navigation []map[string]string `json:"navigation"`
+}
+
+// Load returns embedded public metadata; operational ownership stays in the source JSON.
+func Load() (Profile,error) {
+	var profile Profile
+	err:=json.Unmarshal(data,&profile)
+	return profile,err
+}
+
+// JSON returns a copy suitable for a public metadata response, without ownership contacts.
+func JSON() json.RawMessage { return append(json.RawMessage(nil), data...) }
+
+type Header struct { Organisation,Country,Application,Title,Version,IssuedOn,Footer string }
+
+// ReportHeader supplies presentation metadata. Callers escape it for their output format.
+// issuedOn uses yyyy-MM-dd; pass an explicit report date, not a generated build timestamp.
+func ReportHeader(title,version,issuedOn string)(Header,error) {
+	p,err:=Load();if err!=nil{return Header{},err}
+	if version=="" {version=p.Documents.DefaultVersion}
+	return Header{p.Organisation.Name,p.Organisation.Country,p.Application.Name,p.Documents.TitlePrefix+title,version,issuedOn,p.Documents.FooterText},nil
+}

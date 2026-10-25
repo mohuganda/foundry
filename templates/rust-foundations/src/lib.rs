@@ -5,3 +5,6 @@
 
 pub mod cli;
 pub mod features;
+
+/// Public organisation/application identity and report metadata.
+pub mod identity;

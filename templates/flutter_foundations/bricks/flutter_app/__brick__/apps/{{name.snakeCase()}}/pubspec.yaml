@@ -31,6 +31,8 @@ dependencies:
     path: ../../packages/foundation_storage
   foundation_auth:
     path: ../../packages/foundation_auth
+  foundation_identity:
+    path: ../../packages/foundation_identity
   foundation_ui:
     path: ../../packages/foundation_ui
   foundation_observability:

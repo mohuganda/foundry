@@ -14,6 +14,7 @@ The [workspace guide](workspaces.md) explains which commands apply to each works
 | Creation | Parent folder: interactive generation or `new` | [Creation flags and delivery](#inspect-and-generate) |
 | Go scaffolding | Generated Go root: service, repository, use case, proto, migration | [Extend a project](#extend-a-project) |
 | Flutter scaffolding | Workspace root: feature, package, Mason bricks | [Extend a project](#extend-a-project) |
+| Identity | Generated roots: organisation profiles, public branding, document metadata | [Identity guide](identity.md) |
 | Maintenance | Generated roots: read-only template version comparison | [Maintenance and errors](#maintenance-and-errors) |
 | Workspace development | Native tools for setup, run, format, lint, test, build, clean | Sections 5–8 below |
 | Foundry development and distribution | This repository's Make targets, smoke tests, executable release archives | [Develop and release Foundry](#4-develop-and-release-foundry) |
@@ -110,6 +111,8 @@ Put the project name before flags: `foundry new portal --template react --destin
 | `--template` | Required ID or alias |
 | `--version` | Bundled version by default; if specified, it must equal that bundled version. It does not download another release |
 | `--destination` | Project name as output path; an explicit path changes the output location |
+| `--profile` | `generic`; `moh-uganda` supplies Ministry organisation details with neutral visual defaults |
+| `--identity` | Optional JSON override file; image paths are relative to this file |
 | `--module` | Go module override; otherwise the normalized project name is used |
 | `--org` | Flutter organization placeholder; native Flutter scaffolding defaults to `com.example` if omitted |
 | `--package` | Flutter package placeholder/metadata token; Mason app variables are configured separately when generating a Mason app |
@@ -338,8 +341,8 @@ cargo clippy --locked --offline --all-targets -- -D warnings
 - Formatting calls `make format-check` and cross-compilation calls `make release VERSION=ci`.
 - Web jobs generate fresh projects from the bundled binary, install with npm ci, and run the same npm check gate on Node 22 and 24.
 - Rust jobs generate fresh projects and invoke the same POSIX/PowerShell check scripts. Stable runs on all three OSes; Rust 1.85 runs on Linux. Cargo is offline after toolchain installation.
-- Flutter CI-equivalent local validation is `fvm dart run melos run ci` after setup. Native app builds require a chosen platform. There is no automated Flutter SDK job in the current repository CI workflow.
-- Go-foundation full local validation is `make ci` in a generated project after installing code-generation tools. Foundry Go tests check generation, not all backend integration behavior. There is no separate automated generated-backend test job in the current workflow.
+- Flutter CI uses the pinned SDK to analyze/test the generated identity package and run `scripts/validate_bricks.sh`, including the Mason-generated app. Full local workspace validation is `fvm dart run melos run ci` after setup; native app builds require a chosen platform.
+- A generated Ministry Go project runs `go test ./...` in CI. Full local backend validation is `make ci` after installing code-generation tools; database/external integration still requires the documented services.
 
 For template changes, generate a fresh project and run its native gate. Passing Foundry's Go tests alone does not prove a template's runtime code builds. No release script automatically merges a PR or upgrades existing generated projects.
 

@@ -1,6 +1,10 @@
 import { HomePage } from '../pages/home/HomePage.jsx';
+import { IdentityShell } from '../shared/identity/Identity.jsx';
 
-// Compose application-wide providers and routing at this boundary as needed.
 export function App() {
-  return <HomePage />;
+  return (
+    <IdentityShell>
+      <HomePage />
+    </IdentityShell>
+  );
 }
