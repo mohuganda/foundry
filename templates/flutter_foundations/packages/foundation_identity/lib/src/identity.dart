@@ -37,6 +37,30 @@ class AppIdentity {
       Map<String, dynamic>.from(item as Map),
   ];
 
+  /// Override application metadata for one app in a multi-app workspace.
+  AppIdentity withApplication({String? name, String? description}) {
+    final application = section('application');
+    if (name != null) {
+      application['name'] = name;
+    }
+    if (description != null) {
+      application['description'] = description;
+    }
+    return AppIdentity.fromJson({..._data, 'application': application});
+  }
+
+  Map<String, Uri> get publicLinks => {
+    for (final item in {
+      'Organisation website': website,
+      'Privacy': field('links', 'privacy'),
+      'Accessibility': field('links', 'accessibility'),
+      'Support': field('links', 'support'),
+    }.entries)
+      if (identityLink(item.value) case final Uri uri) item.key: uri,
+    if (supportEmail.isNotEmpty)
+      'Email support': Uri(scheme: 'mailto', path: supportEmail),
+  };
+
   String reportHeader(
     String title, {
     String version = '',
@@ -63,3 +87,24 @@ class AppIdentity {
 final appIdentity = AppIdentity.fromJson(
   jsonDecode(identityJson) as Map<String, dynamic>,
 );
+
+/// Only approved link schemes/application paths are accepted by shared layouts.
+Uri? identityLink(String value) {
+  if (value.isEmpty ||
+      value.codeUnits.contains(92) ||
+      value.runes.any((r) => r <= 32 || r == 127) ||
+      value.startsWith('//')) {
+    return null;
+  }
+  final uri = Uri.tryParse(value);
+  if (uri == null || uri.userInfo.isNotEmpty) {
+    return null;
+  }
+  if (uri.scheme == 'https' && uri.host.isNotEmpty) {
+    return uri;
+  }
+  if (!uri.hasScheme && (value.startsWith('/') || value.startsWith('#'))) {
+    return uri;
+  }
+  return null;
+}
