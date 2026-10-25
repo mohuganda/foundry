@@ -189,3 +189,12 @@ Here `make ci` validates the CLI, generation tests, native executable build, and
 Edit `templates/` when changing future generated output, rebuild Foundry, and generate a fresh project to validate the change. Existing projects are independent copies and are not edited by rebuilding Foundry.
 
 `make release VERSION=<version>` builds executable distribution archives and checksums. It does not publish a release or create template delivery archives. See the [release and script reference](commands.md#4-develop-and-release-foundry) for prerequisites and outputs.
+
+## Organisation identity
+
+All five templates support `--profile moh-uganda` and an optional `--identity file.json`.
+Edit the generated `identity/identity.json`, preview with
+`foundry identity sync --project ./portal --dry-run`, then sync and run the native
+formatter/quality gate. See the [identity guide](identity.md) for configuration, shared
+layouts, report branding, public metadata, and ownership references. Official
+logos/fonts/colours are not bundled; visual defaults are neutral and pending approval.

@@ -154,3 +154,14 @@ Run Melos commands from this workspace root through FVM: `fvm dart run melos run
 Generate/register an app before running it: create it with FVM's Mason CLI, add apps/<name> to workspace: in pubspec.yaml, and run fvm dart pub get. Configure native platform folders, permissions and signing inside that app. Build with `fvm flutter build <platform>` from apps/<app>. Workspace check deliberately does not guess a platform or build every app.
 
 Mason commands in these instructions use `fvm dart pub global run mason_cli:mason` so they use the selected SDK. `foundry mason` is an optional wrapper around `mason make` from PATH; use it only when that global executable is configured for the workspace SDK. Shell scripts need Bash; FVM/Dart commands can also be run natively on Windows.
+
+## Organisation identity
+
+Generate with `foundry new portal --template flutter --profile moh-uganda` to use
+Ministry organisation details. Add `--identity ./moh.json` for programme-specific
+settings. Every generated project contains `identity/identity.json` and
+`identity/README.md`. Edit the JSON, preview with `foundry identity sync --dry-run`
+from the generated root, then run `foundry identity sync` and the native formatter
+and quality gate. Shared layouts and report helpers consume the generated public
+metadata. Ownership references stay in the canonical source; never store secrets
+there. No approved logos, colours, or fonts are supplied.

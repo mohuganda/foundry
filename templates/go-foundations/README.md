@@ -408,3 +408,14 @@ The server reads process environment variables; it does not load configs/.env.ex
 The key script accepts `--help`, resolves its project root regardless of caller directory, preserves existing keys, and sets the private key to mode 600 when creating it. OpenSSL is required. Database migrations and Docker startup are explicit actions; check/test do not run them.
 
 On Windows without Make, use `gofmt -l ./cmd ./internal ./gen`, `go vet ./...`, `go test -race ./...`, and `go build -trimpath -o bin/server.exe ./cmd/server`. Use a POSIX environment for shell helpers, or configure development keys and services through your own platform tooling.
+
+## Organisation identity
+
+Generate with `foundry new portal --template go --profile moh-uganda` to use
+Ministry organisation details. Add `--identity ./moh.json` for programme-specific
+settings. Every generated project contains `identity/identity.json` and
+`identity/README.md`. Edit the JSON, preview with `foundry identity sync --dry-run`
+from the generated root, then run `foundry identity sync` and the native formatter
+and quality gate. Shared layouts and report helpers consume the generated public
+metadata. Ownership references stay in the canonical source; never store secrets
+there. No approved logos, colours, or fonts are supplied.

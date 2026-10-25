@@ -309,3 +309,12 @@ With a Mason executable configured on PATH, Foundry forwards brick arguments to 
 ```bash
 foundry mason feature --app mediguide --name profile
 ```
+
+## Organisation identity
+
+All five templates support `--profile moh-uganda` and an optional `--identity file.json`.
+Edit the generated `identity/identity.json`, preview with
+`foundry identity sync --project ./portal --dry-run`, then sync and run the native
+formatter/quality gate. See the [identity guide](docs/identity.md) for configuration, shared
+layouts, report branding, public metadata, and ownership references. Official
+logos/fonts/colours are not bundled; visual defaults are neutral and pending approval.

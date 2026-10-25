@@ -100,3 +100,14 @@ Do not append --offline to cargo lint: the alias already contains --, so appende
 CARGO_NET_OFFLINE=true bash scripts/check.sh
 cargo clippy --locked --offline --all-targets -- -D warnings
 ```
+
+## Organisation identity
+
+Generate with `foundry new portal --template rust --profile moh-uganda` to use
+Ministry organisation details. Add `--identity ./moh.json` for programme-specific
+settings. Every generated project contains `identity/identity.json` and
+`identity/README.md`. Edit the JSON, preview with `foundry identity sync --dry-run`
+from the generated root, then run `foundry identity sync` and the native formatter
+and quality gate. Shared layouts and report helpers consume the generated public
+metadata. Ownership references stay in the canonical source; never store secrets
+there. No approved logos, colours, or fonts are supplied.

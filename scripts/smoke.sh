@@ -20,12 +20,19 @@ trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 for template in go flutter vanilla-js react rust; do
   project="$scratch/$template"
   if [ "$template" = go ]; then
-    "$binary" new smoke --template go --module smoke --destination "$project" --no-hooks
+    "$binary" new smoke --template go --module smoke --profile moh-uganda --destination "$project" --no-hooks
     grep -q '^module smoke$' "$project/go.mod"
   else
-    "$binary" new smoke --template "$template" --destination "$project" --no-hooks
+    "$binary" new smoke --template "$template" --profile moh-uganda --destination "$project" --no-hooks
   fi
   test -f "$project/.foundry.yaml"
+  "$binary" identity validate --file "$project/identity/identity.json"
+  "$binary" identity sync --project "$project" --dry-run
+  grep -q '"name": "Ministry of Health"' "$project/identity/public.json"
+  if grep -q '"ownership"' "$project/identity/public.json"; then
+    echo 'Ownership leaked into public identity.' >&2
+    exit 1
+  fi
   case "$template" in
     flutter) test -f "$project/pubspec.yaml" ;;
     vanilla-js|react) grep -q '"name": "smoke"' "$project/package.json" ;;
